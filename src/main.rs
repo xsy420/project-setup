@@ -58,10 +58,9 @@ impl ProjectType {
     }
     fn languages(&self) -> Vec<String> {
         match self {
-            Self::SpringBoot => vec!["Java", "Kotlin"],
             Self::CMake => vec!["C", "CPP"],
             Self::Python => vec!["Python"],
-            Self::Maven => vec!["Java", "Kotlin"],
+            Self::Maven | Self::SpringBoot => vec!["Java", "Kotlin"],
             Self::Cargo => vec!["Rust"],
         }
         .iter()
@@ -121,8 +120,7 @@ impl Vcs {
     fn is_available(&self) -> bool {
         match self {
             Self::NotNeed => true,
-            Self::Git => false,
-            Self::Svn => false,
+            Self::Git | Self::Svn => false,
         }
     }
 
@@ -277,7 +275,7 @@ impl<A: Clone> ListStateItem<A> {
             None => 0,
         };
         self.state.select(Some(i));
-        *abc = self.items[i].clone()
+        *abc = self.items[i].clone();
     }
     fn previous(&mut self, abc: &mut A) {
         let i = match self.state.selected() {
@@ -291,7 +289,7 @@ impl<A: Clone> ListStateItem<A> {
             None => 0,
         };
         self.state.select(Some(i));
-        *abc = self.items[i].clone()
+        *abc = self.items[i].clone();
     }
 }
 
@@ -359,31 +357,31 @@ impl ProjectSetupApp {
     fn nop(&mut self, ad: AppDirection) {
         match self.focus {
             FocusInput::ProjectType => {
-                self.config.project_type = self.generic_nav_fn::<ProjectType>()(
+                self.config.project_type = Self::generic_nav_fn::<ProjectType>()(
                     ad,
                     &mut self.type_state,
                     ProjectType::iter().collect(),
                 );
             }
             FocusInput::Version => {
-                self.config.version = self.generic_nav_fn::<String>()(
+                self.config.version = Self::generic_nav_fn::<String>()(
                     ad,
                     &mut self.version_state,
                     self.config.project_type.versions(),
-                )
+                );
             }
             FocusInput::Language => {
-                self.config.language = self.generic_nav_fn::<String>()(
+                self.config.language = Self::generic_nav_fn::<String>()(
                     ad,
                     &mut self.language_state,
                     self.config.project_type.languages(),
-                )
+                );
             }
             _ => {}
         }
     }
 
-    fn generic_nav_fn<T: Clone>(&mut self) -> Box<SwitchItemInListState<T>> {
+    fn generic_nav_fn<T: Clone>() -> Box<SwitchItemInListState<T>> {
         Box::new(|x, y, z| {
             let i = x.get_counter(y.selected(), z.len());
             y.select(Some(i));
@@ -419,7 +417,7 @@ fn main() -> Result<()> {
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 
     if let Err(err) = res {
-        println!("{:?}", err);
+        println!("{err:?}");
     }
 
     Ok(())
@@ -442,12 +440,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                                 FocusInput::Version => {
                                     app.version_state.select(Some(0));
                                     app.config.version =
-                                        app.config.project_type.versions()[0].to_string()
+                                        app.config.project_type.versions()[0].to_string();
                                 }
                                 FocusInput::Language => {
                                     app.language_state.select(Some(0));
                                     app.config.language =
-                                        app.config.project_type.languages()[0].to_string()
+                                        app.config.project_type.languages()[0].to_string();
                                 }
                                 _ => {}
                             }
@@ -502,7 +500,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
 fn ui(f: &mut Frame, app: &ProjectSetupApp) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .margin(FocusInput::iter().count() as u16)
+        .margin(u16::try_from(FocusInput::iter().count()).unwrap())
         .constraints(FocusInput::constraint())
         .split(f.area());
     focus_list_item_ui(f, app, FocusInput::ProjectType, chunks.clone());
@@ -670,9 +668,9 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
         }
         _ => {
             println!(
-                "Created {} project directory at {:?}",
+                "Created {} project directory at {}",
                 config.project_type.desc(),
-                project_path
+                project_path.display()
             );
         }
     }
@@ -685,6 +683,5 @@ mod hello {
     #[test]
     fn world() {
         println!("hello world");
-        assert!(true)
     }
 }
