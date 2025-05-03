@@ -503,9 +503,9 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
         .margin(u16::try_from(FocusInput::iter().count()).unwrap())
         .constraints(FocusInput::constraint())
         .split(f.area());
-    focus_list_item_ui(f, app, FocusInput::ProjectType, chunks.clone());
-    focus_list_item_ui(f, app, FocusInput::Version, chunks.clone());
-    focus_list_item_ui(f, app, FocusInput::Language, chunks.clone());
+    focus_list_item_ui(f, app, FocusInput::ProjectType, &chunks);
+    focus_list_item_ui(f, app, FocusInput::Version, &chunks);
+    focus_list_item_ui(f, app, FocusInput::Language, &chunks);
 
     if app.show[FocusInput::Name.num()] {
         // 输入框样式
@@ -559,7 +559,12 @@ fn focus_border(app: &ProjectSetupApp, focus: FocusInput) -> Block {
         .title(focus.title())
 }
 
-fn focus_list_item_ui(f: &mut Frame, app: &ProjectSetupApp, focus: FocusInput, chunks: Rc<[Rect]>) {
+fn focus_list_item_ui(
+    f: &mut Frame,
+    app: &ProjectSetupApp,
+    focus: FocusInput,
+    chunks: &Rc<[Rect]>,
+) {
     if app.show[focus.num()] {
         // 项目类型选择
 
