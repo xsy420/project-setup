@@ -183,7 +183,7 @@ impl FocusInput {
         }
         .unwrap()
     }
-    fn num(&self) -> usize {
+    fn num(self) -> usize {
         match self {
             Self::ProjectType => 0,
             Self::Version => 1,
@@ -194,19 +194,19 @@ impl FocusInput {
         }
     }
 
-    fn is(&self, o: Self) -> bool {
+    fn is(self, o: Self) -> bool {
         self.num() == o.num()
     }
 
-    fn next(&self) -> Self {
+    fn next(self) -> Self {
         FocusInput::from((self.num() + 1) % Self::ErrorMessage.num())
     }
 
-    fn prev(&self) -> Self {
+    fn prev(self) -> Self {
         FocusInput::from((self.num() - 1) % Self::ErrorMessage.num())
     }
 
-    fn title(&self) -> String {
+    fn title(self) -> String {
         match self {
             Self::ProjectType => "Project Type",
             Self::Version => "Version",
@@ -300,7 +300,7 @@ enum AppDirection {
 }
 
 impl AppDirection {
-    fn get_counter(&self, i: Option<usize>, len: usize) -> usize {
+    fn get_counter(self, i: Option<usize>, len: usize) -> usize {
         match i {
             Some(i) => match self {
                 Self::Next => {
@@ -503,9 +503,9 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
         .margin(u16::try_from(FocusInput::iter().count()).unwrap())
         .constraints(FocusInput::constraint())
         .split(f.area());
-    focus_list_item_ui(f, app, FocusInput::ProjectType, chunks.clone());
-    focus_list_item_ui(f, app, FocusInput::Version, chunks.clone());
-    focus_list_item_ui(f, app, FocusInput::Language, chunks.clone());
+    focus_list_item_ui(f, app, FocusInput::ProjectType, &chunks);
+    focus_list_item_ui(f, app, FocusInput::Version, &chunks);
+    focus_list_item_ui(f, app, FocusInput::Language, &chunks);
 
     if app.show[FocusInput::Name.num()] {
         // 输入框样式
@@ -559,7 +559,12 @@ fn focus_border(app: &ProjectSetupApp, focus: FocusInput) -> Block {
         .title(focus.title())
 }
 
-fn focus_list_item_ui(f: &mut Frame, app: &ProjectSetupApp, focus: FocusInput, chunks: Rc<[Rect]>) {
+fn focus_list_item_ui(
+    f: &mut Frame,
+    app: &ProjectSetupApp,
+    focus: FocusInput,
+    chunks: &Rc<[Rect]>,
+) {
     if app.show[focus.num()] {
         // 项目类型选择
 
