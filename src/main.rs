@@ -668,9 +668,9 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
         }
         _ => {
             println!(
-                "Created {} project directory at {:?}",
+                "Created {} project directory at {}",
                 config.project_type.desc(),
-                project_path
+                project_path.display()
             );
         }
     }
