@@ -5,6 +5,10 @@ on:
     tags:
       - "v*.*.*"
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   # 从 github.repository 中提取项目名称（去掉 owner/ 前缀）
   PROJECT_NAME: ${{ github.repository.split('/')[1] }}
@@ -217,6 +221,8 @@ jobs:
     name: Publish Debian package
     needs: generate-changelog
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -264,6 +270,8 @@ jobs:
     name: Publish RPM package
     needs: generate-changelog
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
