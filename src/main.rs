@@ -212,6 +212,12 @@ enum FocusInput {
     Bottom,
 }
 
+impl PartialEq for FocusInput {
+    fn eq(&self, other: &Self) -> bool {
+        self.num() == other.num()
+    }
+}
+
 impl FocusInput {
     fn from(i: usize) -> Self {
         match i {
@@ -236,10 +242,6 @@ impl FocusInput {
             Self::ErrorMessage => 5,
             Self::Bottom => 6,
         }
-    }
-
-    fn is(self, o: Self) -> bool {
-        self.num() == o.num()
     }
 
     fn next(self) -> Self {
@@ -511,7 +513,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                                 }
                                 _ => {}
                             }
-                            if app.focus.is(FocusInput::Name) {
+                            if app.focus == FocusInput::Name {
                                 app.input_mode = InputMode::Editing;
                                 if app.config.name.is_empty() {
                                     app.msg = "Empty Project Name".to_string();
@@ -519,7 +521,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                             }
                         }
                         KeyCode::Esc => {
-                            if app.focus.is(FocusInput::ProjectType) {
+                            if app.focus == FocusInput::ProjectType {
                                 return Ok(());
                             }
                             app.focus_prev();
@@ -599,8 +601,22 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
 
     // 输入模式指示器
     let mode_text = match app.input_mode {
-        InputMode::Normal => "NORMAL MODE: q=quit, j/k=move, Enter=edit",
-        InputMode::Editing => "EDIT MODE: Esc=exit edit, Enter=create project",
+        InputMode::Normal => {
+            format!(
+                "NORMAL MODE: q=quit, j/k=move, Esc={}, Enter={}",
+                if app.focus.num() > 0 {
+                    "focus previous one"
+                } else {
+                    "quit"
+                },
+                if app.focus == FocusInput::Name {
+                    "edit"
+                } else {
+                    "focus next one"
+                }
+            )
+        }
+        InputMode::Editing => "EDIT MODE: Esc=exit edit, Enter=create project".to_string(),
     };
     let mode_indicator = Paragraph::new(mode_text).block(Block::default());
     f.render_widget(mode_indicator, chunks[FocusInput::Bottom.num()]);
@@ -609,12 +625,12 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
 fn focus_border(app: &ProjectSetupApp, focus: FocusInput) -> Block {
     Block::default()
         .borders(Borders::ALL)
-        .border_type(if app.focus.is(focus) {
+        .border_type(if app.focus == focus {
             BorderType::Thick
         } else {
             BorderType::default()
         })
-        .border_style(if app.focus.is(focus) {
+        .border_style(if app.focus == focus {
             Style::default().fg(Color::Red)
         } else {
             Style::default()
