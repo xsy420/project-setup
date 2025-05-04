@@ -65,7 +65,7 @@ impl Language {
     #[allow(dead_code)]
     fn versions(self) -> Vec<String> {
         match self {
-            Self::Java => vec!["24", "21", "17", "11", "8"],
+            Self::Java => vec!["23", "21", "17", "11", "8"],
             Self::C => vec!["90", "99", "11", "17", "23"],
             Self::Cpp => vec!["98", "03", "11", "14", "17", "20", "23", "26"],
             Self::Python => vec!["3.13", "3.12", "3.11", "3.10", "3.9", "3.8"],
@@ -206,6 +206,7 @@ enum FocusInput {
     ProjectType,
     ProjectVersion,
     Language,
+    LanguageVersion,
     Name,
     ErrorMessage,
     Bottom,
@@ -217,9 +218,10 @@ impl FocusInput {
             0 => Some(Self::ProjectType),
             1 => Some(Self::ProjectVersion),
             2 => Some(Self::Language),
-            3 => Some(Self::Name),
-            4 => Some(Self::ErrorMessage),
-            5 => Some(Self::Bottom),
+            3 => Some(Self::LanguageVersion),
+            4 => Some(Self::Name),
+            5 => Some(Self::ErrorMessage),
+            6 => Some(Self::Bottom),
             _ => None,
         }
         .unwrap()
@@ -229,9 +231,10 @@ impl FocusInput {
             Self::ProjectType => 0,
             Self::ProjectVersion => 1,
             Self::Language => 2,
-            Self::Name => 3,
-            Self::ErrorMessage => 4,
-            Self::Bottom => 5,
+            Self::LanguageVersion => 3,
+            Self::Name => 4,
+            Self::ErrorMessage => 5,
+            Self::Bottom => 6,
         }
     }
 
@@ -252,14 +255,16 @@ impl FocusInput {
             Self::ProjectType => "Project Type",
             Self::ProjectVersion => "Project Version",
             Self::Language => "Language",
+            Self::LanguageVersion => "Language Version",
             Self::Name => "Project Info",
             _ => "",
         }
         .to_string()
     }
 
-    fn constraint() -> [Constraint; 7] {
+    fn constraint() -> [Constraint; 8] {
         [
+            Constraint::Length(3),
             Constraint::Length(3),
             Constraint::Length(3),
             Constraint::Length(3),
@@ -275,13 +280,14 @@ struct ProjectSetupApp {
     project_type_state: ListState,
     project_version_state: ListState,
     language_state: ListState,
+    language_version_state: ListState,
     config: ProjectConfig,
     input_mode: InputMode,
     // [0]: project_type
     // [1]: version
     // [2]: language
     // [3]: name
-    show: [bool; 4],
+    show: [bool; 5],
     msg: String,
     focus: FocusInput,
 }
@@ -368,20 +374,23 @@ type SwitchItemInListState<T> = dyn Fn(AppDirection, &mut ListState, Vec<T>) -> 
 
 impl ProjectSetupApp {
     fn new() -> Self {
-        let mut state1 = ListState::default();
-        state1.select(Some(0));
-        let mut state2 = ListState::default();
-        state2.select(Some(0));
-        let mut state3 = ListState::default();
-        state3.select(Some(0));
+        let mut project_type_state = ListState::default();
+        project_type_state.select(Some(0));
+        let mut project_version_state = ListState::default();
+        project_version_state.select(Some(0));
+        let mut language_state = ListState::default();
+        language_state.select(Some(0));
+        let mut language_version_state = ListState::default();
+        language_version_state.select(Some(0));
 
         Self {
-            project_type_state: state1,
-            project_version_state: state2,
-            language_state: state3,
+            project_type_state,
+            project_version_state,
+            language_state,
+            language_version_state,
             config: ProjectConfig::default(),
             input_mode: InputMode::Normal,
-            show: [true, false, false, false],
+            show: [true, false, false, false, false],
             msg: String::new(),
             focus: FocusInput::ProjectType,
         }
@@ -416,6 +425,13 @@ impl ProjectSetupApp {
                     ad,
                     &mut self.language_state,
                     self.config.project_type.languages(),
+                );
+            }
+            FocusInput::LanguageVersion => {
+                self.config.language_version = Self::generic_nav_fn::<String>()(
+                    ad,
+                    &mut self.language_version_state,
+                    self.config.language.versions(),
                 );
             }
             _ => {}
@@ -487,6 +503,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                                     app.language_state.select(Some(0));
                                     app.config.language = app.config.project_type.languages()[0];
                                 }
+                                FocusInput::LanguageVersion => {
+                                    app.language_version_state.select(Some(0));
+                                    app.config
+                                        .language_version
+                                        .clone_from(&app.config.language.versions()[0]);
+                                }
                                 _ => {}
                             }
                             if app.focus.is(FocusInput::Name) {
@@ -546,6 +568,7 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
     focus_list_item_ui(f, app, FocusInput::ProjectType, &chunks);
     focus_list_item_ui(f, app, FocusInput::ProjectVersion, &chunks);
     focus_list_item_ui(f, app, FocusInput::Language, &chunks);
+    focus_list_item_ui(f, app, FocusInput::LanguageVersion, &chunks);
 
     if app.show[FocusInput::Name.num()] {
         // 输入框样式
@@ -619,6 +642,7 @@ fn focus_list_item_ui(
                     .map(|x| x.desc())
                     .collect(),
             ),
+            FocusInput::LanguageVersion => Some(app.config.language.versions()),
             _ => None,
         }
         .unwrap()
@@ -638,6 +662,7 @@ fn focus_list_item_ui(
                 FocusInput::ProjectType => Some(app.project_type_state.clone()),
                 FocusInput::ProjectVersion => Some(app.project_version_state.clone()),
                 FocusInput::Language => Some(app.language_state.clone()),
+                FocusInput::LanguageVersion => Some(app.language_version_state.clone()),
                 _ => None,
             }
             .unwrap(),
@@ -655,6 +680,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
             let params = [
                 ("type", "maven-project"),
                 ("language", &config.language.desc().to_lowercase()),
+                ("javaVersion", &config.language_version),
                 ("bootVersion", &config.project_version),
                 ("baseDir", &config.name),
             ];
@@ -684,11 +710,17 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
                 cmake_minimum_required(VERSION {})\n\
                 project({})\n\
                 \n\
-                set(CMAKE_C_STANDARD 11)\n\
+                set(CMAKE_{}_STANDARD {})\n\
                 \n\
                 add_executable(${{PROJECT_NAME}} {})\n",
                 config.project_version,
                 config.name,
+                if config.language == Language::C {
+                    "C"
+                } else {
+                    "CXX"
+                },
+                config.language_version,
                 if config.language == Language::C {
                     "main.c"
                 } else {
