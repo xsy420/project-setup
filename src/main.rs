@@ -204,7 +204,7 @@ impl Default for ProjectConfig {
 #[derive(Clone, Copy, EnumIter)]
 enum FocusInput {
     ProjectType,
-    Version,
+    ProjectVersion,
     Language,
     Name,
     ErrorMessage,
@@ -215,7 +215,7 @@ impl FocusInput {
     fn from(i: usize) -> Self {
         match i {
             0 => Some(Self::ProjectType),
-            1 => Some(Self::Version),
+            1 => Some(Self::ProjectVersion),
             2 => Some(Self::Language),
             3 => Some(Self::Name),
             4 => Some(Self::ErrorMessage),
@@ -227,7 +227,7 @@ impl FocusInput {
     fn num(self) -> usize {
         match self {
             Self::ProjectType => 0,
-            Self::Version => 1,
+            Self::ProjectVersion => 1,
             Self::Language => 2,
             Self::Name => 3,
             Self::ErrorMessage => 4,
@@ -250,7 +250,7 @@ impl FocusInput {
     fn title(self) -> String {
         match self {
             Self::ProjectType => "Project Type",
-            Self::Version => "Version",
+            Self::ProjectVersion => "Project Version",
             Self::Language => "Language",
             Self::Name => "Project Info",
             _ => "",
@@ -272,8 +272,8 @@ impl FocusInput {
 }
 
 struct ProjectSetupApp {
-    type_state: ListState,
-    version_state: ListState,
+    project_type_state: ListState,
+    project_version_state: ListState,
     language_state: ListState,
     config: ProjectConfig,
     input_mode: InputMode,
@@ -376,8 +376,8 @@ impl ProjectSetupApp {
         state3.select(Some(0));
 
         Self {
-            type_state: state1,
-            version_state: state2,
+            project_type_state: state1,
+            project_version_state: state2,
             language_state: state3,
             config: ProjectConfig::default(),
             input_mode: InputMode::Normal,
@@ -400,14 +400,14 @@ impl ProjectSetupApp {
             FocusInput::ProjectType => {
                 self.config.project_type = Self::generic_nav_fn::<ProjectType>()(
                     ad,
-                    &mut self.type_state,
+                    &mut self.project_type_state,
                     ProjectType::iter().collect(),
                 );
             }
-            FocusInput::Version => {
+            FocusInput::ProjectVersion => {
                 self.config.project_version = Self::generic_nav_fn::<String>()(
                     ad,
-                    &mut self.version_state,
+                    &mut self.project_version_state,
                     self.config.project_type.versions(),
                 );
             }
@@ -478,8 +478,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                         KeyCode::Enter => {
                             app.focus_next();
                             match app.focus {
-                                FocusInput::Version => {
-                                    app.version_state.select(Some(0));
+                                FocusInput::ProjectVersion => {
+                                    app.project_version_state.select(Some(0));
                                     app.config.project_version =
                                         app.config.project_type.versions()[0].to_string();
                                 }
@@ -544,7 +544,7 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
         .constraints(FocusInput::constraint())
         .split(f.area());
     focus_list_item_ui(f, app, FocusInput::ProjectType, &chunks);
-    focus_list_item_ui(f, app, FocusInput::Version, &chunks);
+    focus_list_item_ui(f, app, FocusInput::ProjectVersion, &chunks);
     focus_list_item_ui(f, app, FocusInput::Language, &chunks);
 
     if app.show[FocusInput::Name.num()] {
@@ -610,7 +610,7 @@ fn focus_list_item_ui(
 
         let items: Vec<ListItem> = match focus {
             FocusInput::ProjectType => Some(ProjectType::iter().map(|x| x.desc()).collect()),
-            FocusInput::Version => Some(app.config.project_type.versions()),
+            FocusInput::ProjectVersion => Some(app.config.project_type.versions()),
             FocusInput::Language => Some(
                 app.config
                     .project_type
@@ -635,8 +635,8 @@ fn focus_list_item_ui(
             list,
             chunks[focus.num()],
             &mut match focus {
-                FocusInput::ProjectType => Some(app.type_state.clone()),
-                FocusInput::Version => Some(app.version_state.clone()),
+                FocusInput::ProjectType => Some(app.project_type_state.clone()),
+                FocusInput::ProjectVersion => Some(app.project_version_state.clone()),
                 FocusInput::Language => Some(app.language_state.clone()),
                 _ => None,
             }
