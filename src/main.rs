@@ -607,6 +607,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
             let client = Client::new();
             let params = [
                 ("type", "maven-project"),
+                ("language", &config.language.to_lowercase()),
                 ("bootVersion", &config.version),
                 ("baseDir", &config.name),
             ];
