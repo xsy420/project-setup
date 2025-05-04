@@ -1,8 +1,7 @@
-name: Typos
+name: Code Quality Checks
 
 permissions:
   contents: read
-  pull-requests: write
 
 on:
   push:
@@ -11,6 +10,13 @@ on:
     branches: [ "main" ]
 
 jobs:
+  editorconfig-check:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run EditorConfig Checker
+      uses: editorconfig-checker/action-editorconfig-checker@main
+    - run: editorconfig-checker
   typos:
     name: Typos
     runs-on: ubuntu-22.04
