@@ -1,13 +1,15 @@
 use std::{
     env::{self},
+    ffi::OsStr,
     fmt::Debug,
     fs::{self},
     io::{self},
     path::PathBuf,
+    process::Command,
     rc::Rc,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
     execute,
@@ -19,11 +21,11 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
 };
 use reqwest::blocking::Client;
-use strum::IntoEnumIterator;
+use strum::{Display, IntoEnumIterator};
 use strum_macros::EnumIter;
 use zip::ZipArchive;
 
-#[derive(Debug, Clone, Default, EnumIter)]
+#[derive(Debug, Clone, Default, EnumIter, Display)]
 enum ProjectType {
     #[default]
     SpringBoot,
@@ -32,7 +34,7 @@ enum ProjectType {
     Cargo,
 }
 
-#[derive(Debug, Clone, Copy, Default, EnumIter)]
+#[derive(Debug, Clone, Copy, Default, EnumIter, Display, PartialEq)]
 enum Language {
     #[default]
     Java,
@@ -43,26 +45,7 @@ enum Language {
     Rust,
 }
 
-impl PartialEq<Language> for Language {
-    fn eq(&self, other: &Language) -> bool {
-        self.desc().eq(other.desc().as_str())
-    }
-}
-
 impl Language {
-    fn desc(self) -> String {
-        match self {
-            Self::Java => "Java",
-            Self::C => "C",
-            Self::Cpp => "CPP",
-            Self::Python => "Python",
-            Self::Kotlin => "Kotlin",
-            Self::Rust => "Rust",
-        }
-        .to_string()
-    }
-
-    #[allow(dead_code)]
     fn versions(self) -> Vec<String> {
         match self {
             Self::Java => vec!["23", "21", "17", "11", "8"],
@@ -79,15 +62,6 @@ impl Language {
 }
 
 impl ProjectType {
-    fn desc(&self) -> String {
-        match self {
-            Self::SpringBoot => "Spring Boot",
-            Self::CMake => "CMake",
-            Self::Maven => "Maven",
-            Self::Cargo => "Cargo",
-        }
-        .to_string()
-    }
     fn versions(&self) -> Vec<String> {
         match self {
             Self::SpringBoot => vec!["3.3.0", "3.4.0", "3.5.0"],
@@ -108,7 +82,7 @@ impl ProjectType {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Display)]
 #[allow(dead_code)]
 enum ProjectPackaging {
     #[default]
@@ -121,23 +95,7 @@ enum ProjectPackaging {
     Ubuntu,
 }
 
-#[allow(dead_code)]
-impl ProjectPackaging {
-    fn desc(&self) -> &str {
-        match self {
-            Self::Alpine => "Alpine",
-            Self::ArchLinux => "ArchLinux",
-            Self::Fedora => "Fedora",
-            Self::Gentoo => "Gentoo",
-            Self::Nix => "Nix",
-            Self::Ubuntu => "Ubuntu",
-            Self::NotNeed => "NotNeed",
-        }
-    }
-}
-
-#[derive(Debug, Default)]
-#[allow(dead_code)]
+#[derive(Debug, Default, Display, Clone, EnumIter, PartialEq)]
 enum Vcs {
     #[default]
     NotNeed,
@@ -145,31 +103,26 @@ enum Vcs {
     Svn,
 }
 
-#[allow(dead_code)]
 impl Vcs {
-    fn init(&self) -> String {
-        match self {
-            Self::NotNeed => "",
-            Self::Git => "git init",
-            Self::Svn => "svn create {}",
-        }
-        .to_string()
-    }
-
     fn is_available(&self) -> bool {
         match self {
             Self::NotNeed => true,
-            Self::Git | Self::Svn => false,
+            Self::Git | Self::Svn => Command::new(self)
+                .arg("--version")
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false),
         }
     }
+}
 
-    fn url(&self) -> String {
-        match self {
+impl AsRef<OsStr> for Vcs {
+    fn as_ref(&self) -> &OsStr {
+        OsStr::new(match self {
+            Self::Git => "git",
+            Self::Svn => "svn",
             Self::NotNeed => "",
-            Self::Git => "git init",
-            Self::Svn => "svn create {}",
-        }
-        .to_string()
+        })
     }
 }
 
@@ -207,6 +160,7 @@ enum FocusInput {
     ProjectVersion,
     Language,
     LanguageVersion,
+    Vcs,
     Name,
     ErrorMessage,
     Bottom,
@@ -225,9 +179,10 @@ impl FocusInput {
             1 => Some(Self::ProjectVersion),
             2 => Some(Self::Language),
             3 => Some(Self::LanguageVersion),
-            4 => Some(Self::Name),
-            5 => Some(Self::ErrorMessage),
-            6 => Some(Self::Bottom),
+            4 => Some(Self::Vcs),
+            5 => Some(Self::Name),
+            6 => Some(Self::ErrorMessage),
+            7 => Some(Self::Bottom),
             _ => None,
         }
         .unwrap()
@@ -238,9 +193,10 @@ impl FocusInput {
             Self::ProjectVersion => 1,
             Self::Language => 2,
             Self::LanguageVersion => 3,
-            Self::Name => 4,
-            Self::ErrorMessage => 5,
-            Self::Bottom => 6,
+            Self::Vcs => 4,
+            Self::Name => 5,
+            Self::ErrorMessage => 6,
+            Self::Bottom => 7,
         }
     }
 
@@ -258,14 +214,16 @@ impl FocusInput {
             Self::ProjectVersion => "Project Version",
             Self::Language => "Language",
             Self::LanguageVersion => "Language Version",
+            Self::Vcs => "VCS",
             Self::Name => "Project Info",
             _ => "",
         }
         .to_string()
     }
 
-    fn constraint() -> [Constraint; 8] {
+    fn constraint() -> [Constraint; 9] {
         [
+            Constraint::Length(3),
             Constraint::Length(3),
             Constraint::Length(3),
             Constraint::Length(3),
@@ -283,13 +241,16 @@ struct ProjectSetupApp {
     project_version_state: ListState,
     language_state: ListState,
     language_version_state: ListState,
+    vcs_state: ListState,
     config: ProjectConfig,
     input_mode: InputMode,
     // [0]: project_type
     // [1]: version
     // [2]: language
-    // [3]: name
-    show: [bool; 5],
+    // [3]: language_version
+    // [4]: vcs
+    // [5]: name
+    show: [bool; 6],
     msg: String,
     focus: FocusInput,
 }
@@ -384,15 +345,18 @@ impl ProjectSetupApp {
         language_state.select(Some(0));
         let mut language_version_state = ListState::default();
         language_version_state.select(Some(0));
+        let mut vcs_state = ListState::default();
+        vcs_state.select(Some(0));
 
         Self {
             project_type_state,
             project_version_state,
             language_state,
             language_version_state,
+            vcs_state,
             config: ProjectConfig::default(),
             input_mode: InputMode::Normal,
-            show: [true, false, false, false, false],
+            show: [true, false, false, false, false, false],
             msg: String::new(),
             focus: FocusInput::ProjectType,
         }
@@ -435,6 +399,10 @@ impl ProjectSetupApp {
                     &mut self.language_version_state,
                     self.config.language.versions(),
                 );
+            }
+            FocusInput::Vcs => {
+                self.config.vcs =
+                    Self::generic_nav_fn::<Vcs>()(ad, &mut self.vcs_state, Vcs::iter().collect());
             }
             _ => {}
         }
@@ -511,6 +479,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                                         .language_version
                                         .clone_from(&app.config.language.versions()[0]);
                                 }
+                                FocusInput::Vcs => {
+                                    app.vcs_state.select(Some(0));
+                                    app.config.vcs = Vcs::default();
+                                }
                                 _ => {}
                             }
                             if app.focus == FocusInput::Name {
@@ -571,6 +543,7 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
     focus_list_item_ui(f, app, FocusInput::ProjectVersion, &chunks);
     focus_list_item_ui(f, app, FocusInput::Language, &chunks);
     focus_list_item_ui(f, app, FocusInput::LanguageVersion, &chunks);
+    focus_list_item_ui(f, app, FocusInput::Vcs, &chunks);
 
     if app.show[FocusInput::Name.num()] {
         // 输入框样式
@@ -582,9 +555,7 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
         // 项目信息显示
         let info = format!(
             "{} {} project: {}",
-            app.config.project_type.desc(),
-            app.config.project_version,
-            app.config.name
+            app.config.project_type, app.config.project_version, app.config.name
         );
         let paragraph = Paragraph::new(info)
             .block(focus_border(app, FocusInput::Name).style(input_style))
@@ -645,20 +616,24 @@ fn focus_list_item_ui(
     chunks: &Rc<[Rect]>,
 ) {
     if app.show[focus.num()] {
-        // 项目类型选择
-
         let items: Vec<ListItem> = match focus {
-            FocusInput::ProjectType => Some(ProjectType::iter().map(|x| x.desc()).collect()),
+            FocusInput::ProjectType => Some(ProjectType::iter().map(|x| x.to_string()).collect()),
             FocusInput::ProjectVersion => Some(app.config.project_type.versions()),
             FocusInput::Language => Some(
                 app.config
                     .project_type
                     .languages()
                     .iter()
-                    .map(|x| x.desc())
+                    .map(Language::to_string)
                     .collect(),
             ),
             FocusInput::LanguageVersion => Some(app.config.language.versions()),
+            FocusInput::Vcs => Some(
+                Vcs::iter()
+                    .filter(Vcs::is_available)
+                    .map(|x| x.to_string())
+                    .collect(),
+            ),
             _ => None,
         }
         .unwrap()
@@ -679,6 +654,7 @@ fn focus_list_item_ui(
                 FocusInput::ProjectVersion => Some(app.project_version_state.clone()),
                 FocusInput::Language => Some(app.language_state.clone()),
                 FocusInput::LanguageVersion => Some(app.language_version_state.clone()),
+                FocusInput::Vcs => Some(app.vcs_state.clone()),
                 _ => None,
             }
             .unwrap(),
@@ -686,16 +662,38 @@ fn focus_list_item_ui(
     }
 }
 
-fn create_project(config: &ProjectConfig) -> Result<()> {
+fn init_vcs_repo(config: &ProjectConfig) -> Result<(), Error> {
+    match config.vcs {
+        Vcs::Git => Command::new("git")
+            .arg("init")
+            .current_dir(config.path.join(&config.name))
+            .output()
+            .map_err(|e| Error::msg(format!("Failed to execute git init: {e}"))),
+        Vcs::Svn => Command::new("svnadmin")
+            .arg("create")
+            .arg(&config.name)
+            .current_dir(&config.path)
+            .output()
+            .map_err(|e| Error::msg(format!("Failed to execute svnadmin create: {e}"))),
+        Vcs::NotNeed => {
+            return Ok(());
+        }
+    }?; // The ? operator will early return if there's an error
+
+    Ok(())
+}
+
+fn create_project(config: &ProjectConfig) -> Result<(), Error> {
     let project_path = config.path.join(&config.name);
     fs::create_dir_all(&project_path)?;
+    init_vcs_repo(config)?;
 
     match config.project_type {
         ProjectType::SpringBoot => {
             let client = Client::new();
             let params = [
                 ("type", "maven-project"),
-                ("language", &config.language.desc().to_lowercase()),
+                ("language", &config.language.to_string().to_lowercase()),
                 ("javaVersion", &config.language_version),
                 ("bootVersion", &config.project_version),
                 ("baseDir", &config.name),
@@ -770,7 +768,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
         _ => {
             println!(
                 "Created {} project directory at {}",
-                config.project_type.desc(),
+                config.project_type,
                 project_path.display()
             );
         }
