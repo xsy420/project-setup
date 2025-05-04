@@ -91,7 +91,7 @@ impl ProjectType {
     fn versions(&self) -> Vec<String> {
         match self {
             Self::SpringBoot => vec!["3.3.0", "3.4.0", "3.5.0"],
-            Self::CMake => vec!["3.25", "3.26", "4.0", "4.1"],
+            Self::CMake => vec!["3.25", "3.26", "4.0"],
             Self::Maven => vec!["3.9.9"],
             Self::Cargo => vec!["1.86.0"],
         }
