@@ -32,8 +32,9 @@ enum ProjectType {
     Cargo,
 }
 
-#[derive(Debug, Clone, EnumIter)]
+#[derive(Debug, Clone, Copy, Default, EnumIter)]
 enum Language {
+    #[default]
     Java,
     Python,
     C,
@@ -42,8 +43,14 @@ enum Language {
     Rust,
 }
 
+impl PartialEq<Language> for Language {
+    fn eq(&self, other: &Language) -> bool {
+        self.desc().eq(other.desc().as_str())
+    }
+}
+
 impl Language {
-    fn desc(&self) -> String {
+    fn desc(self) -> String {
         match self {
             Self::Java => "Java",
             Self::C => "C",
@@ -56,7 +63,7 @@ impl Language {
     }
 
     #[allow(dead_code)]
-    fn versions(&self) -> Vec<String> {
+    fn versions(self) -> Vec<String> {
         match self {
             Self::Java => vec!["24", "21", "17", "11", "8"],
             Self::C => vec!["90", "99", "11", "17", "23"],
@@ -92,15 +99,12 @@ impl ProjectType {
         .map(ToString::to_string)
         .collect()
     }
-    fn languages(&self) -> Vec<String> {
+    fn languages(&self) -> Vec<Language> {
         match self {
             Self::CMake => vec![Language::C, Language::Cpp],
             Self::Maven | Self::SpringBoot => vec![Language::Java, Language::Kotlin],
             Self::Cargo => vec![Language::Rust],
         }
-        .iter()
-        .map(Language::desc)
-        .collect()
     }
 }
 
@@ -176,7 +180,7 @@ struct ProjectConfig {
     project_version: String,
     language_version: String,
     path: PathBuf,
-    language: String,
+    language: Language,
     project_type: ProjectType,
     packaging: ProjectPackaging,
     vcs: Vcs,
@@ -186,7 +190,7 @@ impl Default for ProjectConfig {
     fn default() -> Self {
         Self {
             name: String::new(),
-            language: String::new(),
+            language: Language::default(),
             project_version: String::new(),
             language_version: String::new(),
             path: env::current_dir().unwrap(),
@@ -408,7 +412,7 @@ impl ProjectSetupApp {
                 );
             }
             FocusInput::Language => {
-                self.config.language = Self::generic_nav_fn::<String>()(
+                self.config.language = Self::generic_nav_fn::<Language>()(
                     ad,
                     &mut self.language_state,
                     self.config.project_type.languages(),
@@ -481,8 +485,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                                 }
                                 FocusInput::Language => {
                                     app.language_state.select(Some(0));
-                                    app.config.language =
-                                        app.config.project_type.languages()[0].to_string();
+                                    app.config.language = app.config.project_type.languages()[0];
                                 }
                                 _ => {}
                             }
@@ -608,7 +611,14 @@ fn focus_list_item_ui(
         let items: Vec<ListItem> = match focus {
             FocusInput::ProjectType => Some(ProjectType::iter().map(|x| x.desc()).collect()),
             FocusInput::Version => Some(app.config.project_type.versions()),
-            FocusInput::Language => Some(app.config.project_type.languages()),
+            FocusInput::Language => Some(
+                app.config
+                    .project_type
+                    .languages()
+                    .iter()
+                    .map(|x| x.desc())
+                    .collect(),
+            ),
             _ => None,
         }
         .unwrap()
@@ -644,7 +654,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
             let client = Client::new();
             let params = [
                 ("type", "maven-project"),
-                ("language", &config.language.to_lowercase()),
+                ("language", &config.language.desc().to_lowercase()),
                 ("bootVersion", &config.project_version),
                 ("baseDir", &config.name),
             ];
@@ -679,7 +689,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
                 add_executable(${{PROJECT_NAME}} {})\n",
                 config.project_version,
                 config.name,
-                if config.language == "C" {
+                if config.language == Language::C {
                     "main.c"
                 } else {
                     "main.cpp"
@@ -703,7 +713,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
                 }\n";
 
             fs::write(project_path.join("CMakeLists.txt"), cmake_lists)?;
-            if config.language == "C" {
+            if config.language == Language::C {
                 fs::write(project_path.join("main.c"), main_c)?;
             } else {
                 fs::write(project_path.join("main.cpp"), main_cpp)?;
