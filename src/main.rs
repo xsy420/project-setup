@@ -29,8 +29,46 @@ enum ProjectType {
     SpringBoot,
     CMake,
     Maven,
-    Python,
     Cargo,
+}
+
+#[derive(Debug, Clone, EnumIter)]
+enum Language {
+    Java,
+    Python,
+    C,
+    Cpp,
+    Kotlin,
+    Rust,
+}
+
+impl Language {
+    fn desc(&self) -> String {
+        match self {
+            Self::Java => "Java",
+            Self::C => "C",
+            Self::Cpp => "CPP",
+            Self::Python => "Python",
+            Self::Kotlin => "Kotlin",
+            Self::Rust => "Rust",
+        }
+        .to_string()
+    }
+
+    #[allow(dead_code)]
+    fn versions(&self) -> Vec<String> {
+        match self {
+            Self::Java => vec!["24", "21", "17", "11", "8"],
+            Self::C => vec!["90", "99", "11", "17", "23"],
+            Self::Cpp => vec!["98", "03", "11", "14", "17", "20", "23", "26"],
+            Self::Python => vec!["3.13", "3.12", "3.11", "3.10", "3.9", "3.8"],
+            Self::Kotlin => vec!["2.1.20"],
+            Self::Rust => vec!["1.86.0"],
+        }
+        .iter()
+        .map(ToString::to_string)
+        .collect()
+    }
 }
 
 impl ProjectType {
@@ -38,7 +76,6 @@ impl ProjectType {
         match self {
             Self::SpringBoot => "Spring Boot",
             Self::CMake => "CMake",
-            Self::Python => "Python",
             Self::Maven => "Maven",
             Self::Cargo => "Cargo",
         }
@@ -48,7 +85,6 @@ impl ProjectType {
         match self {
             Self::SpringBoot => vec!["3.3.0", "3.4.0", "3.5.0"],
             Self::CMake => vec!["3.25", "3.26", "4.0", "4.1"],
-            Self::Python => vec!["3.13", "3.12", "3.11", "3.10", "3.9", "3.8"],
             Self::Maven => vec!["3.9.9"],
             Self::Cargo => vec!["1.86.0"],
         }
@@ -58,13 +94,12 @@ impl ProjectType {
     }
     fn languages(&self) -> Vec<String> {
         match self {
-            Self::CMake => vec!["C", "CPP"],
-            Self::Python => vec!["Python"],
-            Self::Maven | Self::SpringBoot => vec!["Java", "Kotlin"],
-            Self::Cargo => vec!["Rust"],
+            Self::CMake => vec![Language::C, Language::Cpp],
+            Self::Maven | Self::SpringBoot => vec![Language::Java, Language::Kotlin],
+            Self::Cargo => vec![Language::Rust],
         }
         .iter()
-        .map(ToString::to_string)
+        .map(Language::desc)
         .collect()
     }
 }
@@ -138,7 +173,8 @@ impl Vcs {
 #[allow(dead_code)]
 struct ProjectConfig {
     name: String,
-    version: String,
+    project_version: String,
+    language_version: String,
     path: PathBuf,
     language: String,
     project_type: ProjectType,
@@ -151,7 +187,8 @@ impl Default for ProjectConfig {
         Self {
             name: String::new(),
             language: String::new(),
-            version: String::new(),
+            project_version: String::new(),
+            language_version: String::new(),
             path: env::current_dir().unwrap(),
             project_type: ProjectType::default(),
             packaging: ProjectPackaging::default(),
@@ -364,7 +401,7 @@ impl ProjectSetupApp {
                 );
             }
             FocusInput::Version => {
-                self.config.version = Self::generic_nav_fn::<String>()(
+                self.config.project_version = Self::generic_nav_fn::<String>()(
                     ad,
                     &mut self.version_state,
                     self.config.project_type.versions(),
@@ -439,7 +476,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut ProjectSetupApp) ->
                             match app.focus {
                                 FocusInput::Version => {
                                     app.version_state.select(Some(0));
-                                    app.config.version =
+                                    app.config.project_version =
                                         app.config.project_type.versions()[0].to_string();
                                 }
                                 FocusInput::Language => {
@@ -518,7 +555,7 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
         let info = format!(
             "{} {} project: {}",
             app.config.project_type.desc(),
-            app.config.version,
+            app.config.project_version,
             app.config.name
         );
         let paragraph = Paragraph::new(info)
@@ -608,7 +645,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
             let params = [
                 ("type", "maven-project"),
                 ("language", &config.language.to_lowercase()),
-                ("bootVersion", &config.version),
+                ("bootVersion", &config.project_version),
                 ("baseDir", &config.name),
             ];
             let bytes = client
@@ -640,7 +677,7 @@ fn create_project(config: &ProjectConfig) -> Result<()> {
                 set(CMAKE_C_STANDARD 11)\n\
                 \n\
                 add_executable(${{PROJECT_NAME}} {})\n",
-                config.version,
+                config.project_version,
                 config.name,
                 if config.language == "C" {
                     "main.c"
