@@ -1,5 +1,4 @@
-use strum::Display;
-use strum_macros::EnumIter;
+use strum_macros::{Display, EnumIter};
 #[derive(Debug, Clone, Copy, Default, EnumIter, Display, PartialEq)]
 pub(crate) enum Language {
     #[default]
