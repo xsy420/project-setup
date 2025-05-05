@@ -12,13 +12,20 @@ use std::io::{self};
 use app::ProjectSetupApp;
 
 use anyhow::Result;
+use clap::Parser;
 use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{Terminal, prelude::*};
 
+/// A TUI to help you setup a project easily.
+#[derive(Parser)]
+#[command(version, about)]
+struct Args {}
+
 fn main() -> Result<()> {
+    Args::parse();
     // 设置终端
     enable_raw_mode()?;
     let mut stdout = io::stdout();
