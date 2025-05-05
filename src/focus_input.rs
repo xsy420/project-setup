@@ -1,10 +1,12 @@
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
 use ratatui::{
     layout::Constraint,
     style::{Color, Style},
     widgets::{Block, BorderType, Borders},
 };
 use strum_macros::EnumIter;
-#[derive(Clone, Copy, EnumIter)]
+#[derive(Debug, Clone, Copy, EnumIter, FromPrimitive, ToPrimitive, PartialEq)]
 pub(crate) enum FocusInput {
     ProjectType,
     ProjectVersion,
@@ -16,46 +18,17 @@ pub(crate) enum FocusInput {
     Bottom,
 }
 
-impl PartialEq for FocusInput {
-    fn eq(&self, other: &Self) -> bool {
-        self.num() == other.num()
-    }
-}
-
 impl FocusInput {
-    fn from(i: usize) -> Self {
-        match i {
-            0 => Some(Self::ProjectType),
-            1 => Some(Self::ProjectVersion),
-            2 => Some(Self::Language),
-            3 => Some(Self::LanguageVersion),
-            4 => Some(Self::Vcs),
-            5 => Some(Self::Name),
-            6 => Some(Self::ErrorMessage),
-            7 => Some(Self::Bottom),
-            _ => None,
-        }
-        .unwrap()
-    }
     pub(crate) fn num(self) -> usize {
-        match self {
-            Self::ProjectType => 0,
-            Self::ProjectVersion => 1,
-            Self::Language => 2,
-            Self::LanguageVersion => 3,
-            Self::Vcs => 4,
-            Self::Name => 5,
-            Self::ErrorMessage => 6,
-            Self::Bottom => 7,
-        }
+        Self::to_usize(&self).unwrap()
     }
 
     pub(crate) fn next(self) -> Self {
-        FocusInput::from((self.num() + 1) % Self::ErrorMessage.num())
+        Self::from_usize((self.num() + 1) % Self::ErrorMessage.num()).unwrap()
     }
 
     pub(crate) fn prev(self) -> Self {
-        FocusInput::from((self.num() - 1) % Self::ErrorMessage.num())
+        Self::from_usize((self.num() - 1) % Self::ErrorMessage.num()).unwrap()
     }
 
     pub(crate) fn title(self) -> String {
@@ -98,5 +71,26 @@ impl FocusInput {
                 Style::default()
             })
             .title(needed_focus.title())
+    }
+}
+
+#[cfg(test)]
+mod force_input {
+    use super::FocusInput;
+
+    #[test]
+    fn num() {
+        assert_eq!(FocusInput::ProjectType.num(), 0);
+    }
+
+    #[test]
+    fn next() {
+        assert_eq!(FocusInput::ProjectType.next(), FocusInput::ProjectVersion);
+        assert_eq!(FocusInput::Name.next(), FocusInput::ProjectType);
+    }
+
+    #[test]
+    fn prev() {
+        assert_eq!(FocusInput::ProjectVersion.prev(), FocusInput::ProjectType);
     }
 }
