@@ -97,6 +97,6 @@ impl FocusInput {
             } else {
                 Style::default()
             })
-            .title(self.title())
+            .title(needed_focus.title())
     }
 }
