@@ -1,6 +1,5 @@
 use crate::language::Language;
-use strum::Display;
-use strum_macros::EnumIter;
+use strum_macros::{Display, EnumIter};
 
 #[derive(Debug, Clone, Default, EnumIter, Display)]
 pub(crate) enum ProjectType {

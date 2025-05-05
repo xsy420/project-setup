@@ -1,7 +1,6 @@
 use anyhow::Error;
 use std::{ffi::OsStr, path::PathBuf, process::Command};
-use strum::Display;
-use strum_macros::EnumIter;
+use strum_macros::{Display, EnumIter};
 
 #[derive(Debug, Default, Display, Clone, EnumIter, PartialEq)]
 pub(crate) enum Vcs {
