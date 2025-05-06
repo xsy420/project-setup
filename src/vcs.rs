@@ -1,8 +1,22 @@
 use anyhow::Error;
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
+use project_setup_derive::LoopableNumberedEnum;
 use std::{ffi::OsStr, path::PathBuf, process::Command};
 use strum_macros::{Display, EnumIter};
 
-#[derive(Debug, Default, Display, Clone, EnumIter, PartialEq)]
+#[derive(
+    Debug,
+    Default,
+    Display,
+    Clone,
+    EnumIter,
+    PartialEq,
+    FromPrimitive,
+    ToPrimitive,
+    LoopableNumberedEnum,
+)]
+#[numbered_enum(loop_within = 3)]
 pub(crate) enum Vcs {
     #[default]
     NotNeed,

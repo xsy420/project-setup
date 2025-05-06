@@ -1,5 +1,20 @@
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
+use project_setup_derive::LoopableNumberedEnum;
 use strum_macros::{Display, EnumIter};
-#[derive(Debug, Clone, Copy, Default, EnumIter, Display, PartialEq)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    EnumIter,
+    Display,
+    PartialEq,
+    LoopableNumberedEnum,
+    FromPrimitive,
+    ToPrimitive,
+)]
+#[numbered_enum(loop_within = 6)]
 pub(crate) enum Language {
     #[default]
     Java,

@@ -1,12 +1,16 @@
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
+use project_setup_derive::LoopableNumberedEnum;
 use ratatui::{
     layout::Constraint,
     style::{Color, Style},
     widgets::{Block, BorderType, Borders},
 };
 use strum_macros::EnumIter;
-#[derive(Debug, Clone, Copy, EnumIter, FromPrimitive, ToPrimitive, PartialEq)]
+#[derive(
+    Debug, Clone, Copy, EnumIter, FromPrimitive, ToPrimitive, PartialEq, LoopableNumberedEnum,
+)]
+#[numbered_enum(loop_within = 6)]
 pub(crate) enum FocusInput {
     ProjectType,
     ProjectVersion,
@@ -19,18 +23,6 @@ pub(crate) enum FocusInput {
 }
 
 impl FocusInput {
-    pub(crate) fn num(self) -> usize {
-        Self::to_usize(&self).unwrap()
-    }
-
-    pub(crate) fn next(self) -> Self {
-        Self::from_usize((self.num() + 1) % Self::ErrorMessage.num()).unwrap()
-    }
-
-    pub(crate) fn prev(self) -> Self {
-        Self::from_usize((self.num() - 1) % Self::ErrorMessage.num()).unwrap()
-    }
-
     pub(crate) fn title(self) -> String {
         match self {
             Self::ProjectType => "Project Type",
@@ -71,26 +63,5 @@ impl FocusInput {
                 Style::default()
             })
             .title(needed_focus.title())
-    }
-}
-
-#[cfg(test)]
-mod force_input {
-    use super::FocusInput;
-
-    #[test]
-    fn num() {
-        assert_eq!(FocusInput::ProjectType.num(), 0);
-    }
-
-    #[test]
-    fn next() {
-        assert_eq!(FocusInput::ProjectType.next(), FocusInput::ProjectVersion);
-        assert_eq!(FocusInput::Name.next(), FocusInput::ProjectType);
-    }
-
-    #[test]
-    fn prev() {
-        assert_eq!(FocusInput::ProjectVersion.prev(), FocusInput::ProjectType);
     }
 }
