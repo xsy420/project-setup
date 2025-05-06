@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "cargo"  # Rust 的包管理器
     directory: "/"              # 配置文件所在目录（通常是根目录）
     schedule:
-      interval: "daily"         # 检查频率（daily/weekly/monthly）
+      interval: "monthly"         # 检查频率（daily/weekly/monthly）
     open-pull-requests-limit: 5 # 同时打开的 PR 最大数量
     reviewers:                 # （可选）指定评审者
       - "xsy420"
