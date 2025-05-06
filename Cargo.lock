@@ -1050,11 +1050,21 @@ dependencies = [
  "crossterm",
  "num-derive",
  "num-traits",
+ "project_setup_derive",
  "ratatui",
  "reqwest",
  "strum 0.27.1",
  "strum_macros 0.27.1",
  "zip",
+]
+
+[[package]]
+name = "project_setup_derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
