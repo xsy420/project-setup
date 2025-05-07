@@ -10,13 +10,14 @@ use strum_macros::EnumIter;
 #[derive(
     Debug, Clone, Copy, EnumIter, FromPrimitive, ToPrimitive, PartialEq, LoopableNumberedEnum,
 )]
-#[numbered_enum(loop_within = 6)]
+#[numbered_enum(loop_within = 7)]
 pub(crate) enum FocusInput {
     ProjectType,
     ProjectVersion,
     Language,
     LanguageVersion,
     Vcs,
+    Editor,
     Name,
     ErrorMessage,
     Bottom,
@@ -30,14 +31,16 @@ impl FocusInput {
             Self::Language => "Language",
             Self::LanguageVersion => "Language Version",
             Self::Vcs => "VCS",
+            Self::Editor => "Editor",
             Self::Name => "Project Info",
             _ => "",
         }
         .to_string()
     }
 
-    pub(crate) fn constraint() -> [Constraint; 9] {
+    pub(crate) fn constraint() -> [Constraint; 10] {
         [
+            Constraint::Length(3),
             Constraint::Length(3),
             Constraint::Length(3),
             Constraint::Length(3),

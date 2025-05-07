@@ -6,10 +6,11 @@ use zip::ZipArchive;
 
 use crate::{language::Language, project_config::ProjectConfig, project_type::ProjectType};
 
-pub(crate) fn create_project(config: &ProjectConfig) -> Result<(), Error> {
+pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
     let project_path = config.path.join(&config.name);
     fs::create_dir_all(&project_path)?;
     config.vcs.init_vcs_repo(&config.name, &config.path)?;
+    let mut main_file_to_edit = "";
 
     match config.project_type {
         ProjectType::SpringBoot => {
@@ -40,6 +41,7 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<(), Error> {
             archive
                 .extract(&config.path)
                 .context("Failed to extract ZIP archive")?;
+            main_file_to_edit = "src/main/java/com/example/demo/DemoApplication.java";
         }
         ProjectType::CMake => {
             let cmake_lists = format!(
@@ -84,8 +86,10 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<(), Error> {
             fs::write(project_path.join("CMakeLists.txt"), cmake_lists)?;
             if config.language == Language::C {
                 fs::write(project_path.join("main.c"), main_c)?;
+                main_file_to_edit = "main.c";
             } else {
                 fs::write(project_path.join("main.cpp"), main_cpp)?;
+                main_file_to_edit = "main.cpp";
             }
         }
         _ => {
@@ -97,5 +101,5 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<(), Error> {
         }
     }
 
-    Ok(())
+    Ok(main_file_to_edit.to_string())
 }
