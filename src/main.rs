@@ -53,5 +53,6 @@ mod hello {
     #[test]
     fn world() {
         println!("hello world");
+        println!("a test for cleanup cargo pr cache");
     }
 }
