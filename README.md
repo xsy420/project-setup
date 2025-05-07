@@ -3,6 +3,9 @@
 </div>
 
 <div align="center">
+  <a href="https://github.com/xsy420/project-setup/actions/workflows/cleanup-pr-cache.yml" target="_blank">
+    <img src="https://img.shields.io/github/actions/workflow/status/xsy420/project-setup/cleanup-pr-cache.yml?style=flat-square&logo=githubactions&logoColor=white&label=PR%20Cache%20Cleanup&labelColor=2088FF&color=347D39&event=closed" alt="PR Cache Cleanup" />
+  </a>
   <a href="https://github.com/xsy420/project-setup/actions/workflows/code_quality.yml" target="_blank">
     <img src="https://img.shields.io/github/actions/workflow/status/xsy420/project-setup/code_quality.yml?style=flat-square&logo=githubactions&logoColor=ffffff&label=Code+Quality&labelColor=2088FF&color=347D39&event=push" alt="Code Quality status" />
   </a>
