@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 
-use crate::{language::Language, project_type::ProjectType, vcs::Vcs};
+use crate::{editor::Editor, language::Language, project_type::ProjectType, vcs::Vcs};
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -13,6 +13,7 @@ pub(crate) struct ProjectConfig {
     pub(crate) project_type: ProjectType,
     // packaging: ProjectPackaging,
     pub(crate) vcs: Vcs,
+    pub(crate) editor: Editor,
 }
 
 impl Default for ProjectConfig {
@@ -26,6 +27,7 @@ impl Default for ProjectConfig {
             project_type: ProjectType::default(),
             // packaging: ProjectPackaging::default(),
             vcs: Vcs::default(),
+            editor: Editor::default(),
         }
     }
 }

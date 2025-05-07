@@ -1,6 +1,7 @@
 mod app;
 mod create_project;
 mod direction;
+mod editor;
 mod focus_input;
 mod language;
 mod project_config;

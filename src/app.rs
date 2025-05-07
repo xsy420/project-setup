@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::create_project::create_project;
 use crate::direction::AppDirection;
+use crate::editor::Editor;
 use crate::focus_input::FocusInput;
 use crate::language::Language;
 use crate::project_config::ProjectConfig;
@@ -30,6 +31,7 @@ pub(crate) struct ProjectSetupApp {
     language_state: ListState,
     language_version_state: ListState,
     vcs_state: ListState,
+    editor_state: ListState,
     config: ProjectConfig,
     input_mode: InputMode,
     // [0]: project_type
@@ -37,8 +39,9 @@ pub(crate) struct ProjectSetupApp {
     // [2]: language
     // [3]: language_version
     // [4]: vcs
-    // [5]: name
-    show: [bool; 6],
+    // [5]: editor
+    // [6]: name
+    show: [bool; 7],
     msg: String,
     focus: FocusInput,
 }
@@ -55,6 +58,8 @@ impl ProjectSetupApp {
         language_version_state.select(Some(0));
         let mut vcs_state = ListState::default();
         vcs_state.select(Some(0));
+        let mut editor_state = ListState::default();
+        editor_state.select(Some(0));
 
         Self {
             project_type_state,
@@ -62,9 +67,10 @@ impl ProjectSetupApp {
             language_state,
             language_version_state,
             vcs_state,
+            editor_state,
             config: ProjectConfig::default(),
             input_mode: InputMode::Normal,
-            show: [true, false, false, false, false, false],
+            show: [true, false, false, false, false, false, false],
             msg: String::new(),
             focus: FocusInput::ProjectType,
         }
@@ -111,6 +117,13 @@ impl ProjectSetupApp {
             FocusInput::Vcs => {
                 self.config.vcs =
                     Self::generic_nav_fn::<Vcs>()(ad, &mut self.vcs_state, Vcs::iter().collect());
+            }
+            FocusInput::Editor => {
+                self.config.editor = Self::generic_nav_fn::<Editor>()(
+                    ad,
+                    &mut self.editor_state,
+                    Editor::iter().collect(),
+                );
             }
             _ => {}
         }
@@ -171,6 +184,10 @@ pub(crate) fn run_app<B: Backend>(
                                     app.vcs_state.select(Some(0));
                                     app.config.vcs = Vcs::default();
                                 }
+                                FocusInput::Editor => {
+                                    app.editor_state.select(Some(0));
+                                    app.config.editor = Editor::default();
+                                }
                                 _ => {}
                             }
                             if app.focus == FocusInput::Name {
@@ -199,7 +216,9 @@ pub(crate) fn run_app<B: Backend>(
                             if app.config.name.is_empty() {
                                 app.msg = "Empty Project Name".to_string();
                             } else {
-                                create_project(&app.config)?;
+                                let project_path = app.config.path.join(&app.config.name);
+                                let main_file = create_project(&app.config)?;
+                                app.config.editor.run(project_path, main_file)?;
                                 return Ok(());
                             }
                         }
@@ -232,6 +251,7 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
     focus_list_item_ui(f, app, FocusInput::Language, &chunks);
     focus_list_item_ui(f, app, FocusInput::LanguageVersion, &chunks);
     focus_list_item_ui(f, app, FocusInput::Vcs, &chunks);
+    focus_list_item_ui(f, app, FocusInput::Editor, &chunks);
 
     if app.show[FocusInput::Name.num()] {
         // 输入框样式
@@ -306,6 +326,12 @@ fn focus_list_item_ui(
                     .map(|x| x.to_string())
                     .collect(),
             ),
+            FocusInput::Editor => Some(
+                Editor::iter()
+                    .filter(Editor::is_available)
+                    .map(|x| x.to_string())
+                    .collect(),
+            ),
             _ => None,
         }
         .unwrap()
@@ -327,6 +353,7 @@ fn focus_list_item_ui(
                 FocusInput::Language => Some(app.language_state.clone()),
                 FocusInput::LanguageVersion => Some(app.language_version_state.clone()),
                 FocusInput::Vcs => Some(app.vcs_state.clone()),
+                FocusInput::Editor => Some(app.editor_state.clone()),
                 _ => None,
             }
             .unwrap(),
