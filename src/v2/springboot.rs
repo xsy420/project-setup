@@ -63,14 +63,12 @@ impl Render for SpringBootInner {
             .constraints([Constraint::Length(6); 5])
             .split(area);
         for i in (0..labels.len()).step_by(2) {
-            let half = i / 2;
-            let left = i;
-            let right = i + 1;
-            let s = Layout::default()
+            let (half, left, right) = (i / 2, i, i + 1);
+            let line_layout = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Ratio(1, 2); 2])
                 .split(form_layout[half]);
-            let (left_full_layout, right_full_layout) = (s[0], s[1]);
+            let (left_full_layout, right_full_layout) = (line_layout[0], line_layout[1]);
             // 标签
             let left_label_input_area = Layout::default()
                 .direction(Direction::Horizontal)
