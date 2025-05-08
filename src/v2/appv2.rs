@@ -15,12 +15,14 @@ use super::{render::Render, springboot::SpringBootInner, wip::WipInner};
 
 pub(crate) struct Appv2 {
     pub(crate) selected: ProjectType,
+    pub(crate) focus_left_side: bool,
 }
 
 impl Appv2 {
     pub(crate) fn new() -> Self {
         Self {
             selected: ProjectType::default(),
+            focus_left_side: true,
         }
     }
 }
@@ -39,7 +41,11 @@ fn ui(frame: &mut Frame, app: &Appv2) {
             Block::default()
                 .title(FocusInput::ProjectType.title())
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::LightBlue)),
+                .border_style(Style::default().fg(if app.focus_left_side {
+                    Color::Red
+                } else {
+                    Color::LightBlue
+                })),
         )
         .highlight_style(
             Style::default()
@@ -57,12 +63,27 @@ fn ui(frame: &mut Frame, app: &Appv2) {
         ProjectType::SpringBoot => &SpringBootInner::new(),
         _ => &WipInner {},
     };
-    render.render(frame, main_layout[1]);
+    frame.render_widget(
+        Block::default()
+            .title(app.selected.to_string())
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(if app.focus_left_side {
+                Color::LightBlue
+            } else {
+                Color::Red
+            })),
+        main_layout[1],
+    );
+    render.render(frame, app, main_layout[1]);
 
     // 底部帮助栏
-    let help_bar = Paragraph::new("j/k: move | Enter: choose | q: quit")
-        .style(Style::default().fg(Color::Gray))
-        .alignment(Alignment::Center);
+    let help_bar = Paragraph::new(if app.focus_left_side {
+        "j/k: move | Enter: choose | q: quit"
+    } else {
+        "Esc: focus back to left"
+    })
+    .style(Style::default().fg(Color::Gray))
+    .alignment(Alignment::Center);
 
     let bottom_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -78,12 +99,31 @@ pub(crate) fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut Appv2) -
         // 处理输入事件
         if let Event::Key(key) = event::read()? {
             match key.code {
-                KeyCode::Char('q') => return Ok(()),
-                KeyCode::Char('j') => app.selected = app.selected.next(),
-                KeyCode::Char('k') => app.selected = app.selected.prev(),
-                // KeyCode::Enter => {
-                //     // 这里可以添加选择确认的逻辑
-                // }
+                KeyCode::Char('q') => {
+                    if app.focus_left_side {
+                        return Ok(());
+                    }
+                }
+                KeyCode::Char('j') => {
+                    if app.focus_left_side {
+                        app.selected = app.selected.next();
+                    }
+                }
+                KeyCode::Char('k') => {
+                    if app.focus_left_side {
+                        app.selected = app.selected.prev();
+                    }
+                }
+                KeyCode::Enter => {
+                    if app.focus_left_side {
+                        app.focus_left_side = false;
+                    }
+                }
+                KeyCode::Esc => {
+                    if !app.focus_left_side {
+                        app.focus_left_side = true;
+                    }
+                }
                 _ => {}
             }
         }

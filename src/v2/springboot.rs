@@ -1,5 +1,5 @@
-use super::focus::Focus;
 use super::render::Render;
+use super::{Appv2, focus::Focus};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -45,7 +45,7 @@ impl SpringBootInner {
 }
 
 impl Render for SpringBootInner {
-    fn render(&self, f: &mut Frame, area: Rect) {
+    fn render(&self, f: &mut Frame, _app: &Appv2, area: Rect) {
         let labels = [
             "name",
             "generator",
