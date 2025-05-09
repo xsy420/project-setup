@@ -48,26 +48,13 @@ pub(crate) struct ProjectSetupApp {
 
 impl ProjectSetupApp {
     pub(crate) fn new() -> Self {
-        let mut project_type_state = ListState::default();
-        project_type_state.select(Some(0));
-        let mut project_version_state = ListState::default();
-        project_version_state.select(Some(0));
-        let mut language_state = ListState::default();
-        language_state.select(Some(0));
-        let mut language_version_state = ListState::default();
-        language_version_state.select(Some(0));
-        let mut vcs_state = ListState::default();
-        vcs_state.select(Some(0));
-        let mut editor_state = ListState::default();
-        editor_state.select(Some(0));
-
         Self {
-            project_type_state,
-            project_version_state,
-            language_state,
-            language_version_state,
-            vcs_state,
-            editor_state,
+            project_type_state: ListState::default().with_selected(Some(0)),
+            project_version_state: ListState::default().with_selected(Some(0)),
+            language_state: ListState::default().with_selected(Some(0)),
+            language_version_state: ListState::default().with_selected(Some(0)),
+            vcs_state: ListState::default().with_selected(Some(0)),
+            editor_state: ListState::default().with_selected(Some(0)),
             config: ProjectConfig::default(),
             input_mode: InputMode::Normal,
             show: [true, false, false, false, false, false, false],
