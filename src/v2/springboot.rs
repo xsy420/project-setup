@@ -78,28 +78,28 @@ impl Inner for SpringBootInner {
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(6); 6])
             .split(area);
+        let split_line_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Ratio(1, 2); 2]);
+        let split_label_input_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Length(20), Constraint::Min(0)]);
+        let split_input_error_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)]);
         for i in (0..labels.len()).step_by(2) {
             let (half, left, right) = (i / 2, i, i + 1);
-            let line_layout = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Ratio(1, 2); 2])
-                .split(form_layout[half]);
+            let line_layout = split_line_layout.split(form_layout[half]);
             let (left_full_layout, right_full_layout) = (line_layout[0], line_layout[1]);
             // 标签
-            let left_label_input_area = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Length(20), Constraint::Min(0)])
-                .split(left_full_layout);
+            let mut label_input_area = split_label_input_layout.split(left_full_layout);
             f.render_widget(
                 Paragraph::new(labels[left]).centered().block(
                     Block::default()
                         .borders(Borders::all())
                         .border_type(BorderType::Thick),
                 ),
-                Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)])
-                    .split(left_label_input_area[0])[1],
+                split_input_error_layout.split(label_input_area[0])[1],
             );
             f.render_widget(
                 Paragraph::new(if left == 0 {
@@ -126,27 +126,18 @@ impl Inner for SpringBootInner {
                         })
                         .border_type(BorderType::Thick),
                 ),
-                Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)])
-                    .split(left_label_input_area[1])[1],
+                split_input_error_layout.split(label_input_area[1])[1],
             );
 
             if right != labels.len() {
-                let right_label_input_area = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Length(20), Constraint::Min(0)])
-                    .split(right_full_layout);
+                label_input_area = split_label_input_layout.split(right_full_layout);
                 f.render_widget(
                     Paragraph::new(labels[right]).centered().block(
                         Block::default()
                             .borders(Borders::all())
                             .border_type(BorderType::Thick),
                     ),
-                    Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)])
-                        .split(right_label_input_area[0])[1],
+                    split_input_error_layout.split(label_input_area[0])[1],
                 );
 
                 f.render_widget(
@@ -155,10 +146,7 @@ impl Inner for SpringBootInner {
                             .borders(Borders::ALL)
                             .border_type(BorderType::Thick),
                     ),
-                    Layout::default()
-                        .direction(Direction::Vertical)
-                        .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)])
-                        .split(right_label_input_area[1])[1],
+                    split_input_error_layout.split(label_input_area[1])[1],
                 );
             }
         }
