@@ -1,10 +1,20 @@
-use super::render::Render;
+use crate::editor::Editor;
+use crate::vcs::Vcs;
+
+use super::inner::{Inner, InnerHandleKeyEventOutput};
 use super::{Appv2, focus::Focus};
+use anyhow::{Context, Result};
+use crossterm::event::{KeyCode, KeyEvent};
+use ratatui::style::Color;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, BorderType, Borders, Paragraph},
 };
+use reqwest::blocking::Client;
+use std::path::PathBuf;
+use std::{env, fs, io};
+use zip::ZipArchive;
 
 #[derive(Default)]
 #[allow(dead_code)]
@@ -22,8 +32,10 @@ pub(crate) struct SpringBootInner {
     boot_version: String,
     java_version: String,
     kotlin_version: Option<String>,
+    editor: Editor,
+    vcs: Vcs,
     dependencies: Vec<String>,
-    path: String,
+    path: PathBuf,
     focus: Focus,
 }
 
@@ -37,15 +49,17 @@ impl SpringBootInner {
             boot_version: String::new(),
             java_version: String::new(),
             kotlin_version: None,
+            editor: Editor::default(),
+            vcs: Vcs::default(),
             dependencies: vec![String::new()],
-            path: String::new(),
+            path: env::current_dir().unwrap(),
             focus: Focus::new(),
         }
     }
 }
 
-impl Render for SpringBootInner {
-    fn render(&self, f: &mut Frame, _app: &Appv2, area: Rect) {
+impl Inner for SpringBootInner {
+    fn render(&self, f: &mut Frame, app: &Appv2, area: Rect) {
         let labels = [
             "name",
             "generator",
@@ -54,13 +68,15 @@ impl Render for SpringBootInner {
             "boot_version",
             "java_version",
             "kotlin_version",
+            "editor",
+            "vcs",
             "dependencies",
             "path",
         ];
         // 表单布局 - 垂直排列输入框
         let form_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(6); 5])
+            .constraints([Constraint::Length(6); 6])
             .split(area);
         for i in (0..labels.len()).step_by(2) {
             let (half, left, right) = (i / 2, i, i + 1);
@@ -86,9 +102,28 @@ impl Render for SpringBootInner {
                     .split(left_label_input_area[0])[1],
             );
             f.render_widget(
-                Paragraph::new(format!("Please input {}", labels[left])).block(
+                Paragraph::new(if left == 0 {
+                    if self.name.is_empty() {
+                        format!("Please input {}", labels[left])
+                    } else {
+                        self.name.to_string()
+                    }
+                } else {
+                    format!("Please input {}", labels[left])
+                })
+                .style(if left == 0 && self.name.is_empty() {
+                    Color::Gray
+                } else {
+                    Color::default()
+                })
+                .block(
                     Block::new()
                         .borders(Borders::ALL)
+                        .border_style(if left == 0 && !app.focus_left_side {
+                            Color::Red
+                        } else {
+                            Color::default()
+                        })
                         .border_type(BorderType::Thick),
                 ),
                 Layout::default()
@@ -127,5 +162,62 @@ impl Render for SpringBootInner {
                 );
             }
         }
+    }
+    fn bottom_help_message(&self) -> String {
+        String::new()
+    }
+    fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
+        match key.code {
+            KeyCode::Char(c) => {
+                self.name.push(c);
+            }
+            KeyCode::Backspace => {
+                self.name.pop();
+            }
+            KeyCode::Enter => {
+                return InnerHandleKeyEventOutput::default().with_exited();
+            }
+            _ => {}
+        }
+        InnerHandleKeyEventOutput::default()
+    }
+    fn create_and_edit(&self) -> Result<()> {
+        let project_path = self.path.join(&self.name);
+        fs::create_dir_all(&project_path)?;
+        self.vcs.init_vcs_repo(&self.name, &self.path)?;
+        let client = Client::new();
+        let params = [
+            ("type", "maven-project"),
+            // ("language", &config.language.to_string().to_lowercase()),
+            // ("javaVersion", &config.language_version),
+            ("bootVersion", self.boot_version.as_str()),
+            ("baseDir", self.name.as_str()),
+        ];
+        let bytes = client
+            .post("https://start.spring.io/starter.zip")
+            .form(&params)
+            .send()
+            .context("Failed to send request to Spring Boot starter")?
+            .bytes()
+            .context("Failed to read response bytes")?;
+
+        // 直接在内存中解压 ZIP
+        let mut archive =
+            ZipArchive::new(io::Cursor::new(bytes)).context("Failed to parse ZIP archive")?;
+
+        // 确保目标目录存在
+        fs::create_dir_all(&self.path).context("Failed to create project directory")?;
+
+        // 解压所有文件到目标目录
+        archive
+            .extract(&self.path)
+            .context("Failed to extract ZIP archive")?;
+
+        println!("create {}", self.name);
+        self.editor.run(
+            self.path.join(&self.name),
+            "src/main/java/com/example/demo/DemoApplication.java".to_string(),
+        )?;
+        Ok(())
     }
 }

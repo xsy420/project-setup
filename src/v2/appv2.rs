@@ -11,18 +11,26 @@ use ratatui::{
 };
 use strum::IntoEnumIterator;
 
-use super::{render::Render, springboot::SpringBootInner, wip::WipInner};
+use super::{inner::Inner, springboot::SpringBootInner, wip::WipInner};
 
 pub(crate) struct Appv2 {
     pub(crate) selected: ProjectType,
     pub(crate) focus_left_side: bool,
+    pub(crate) inners: Vec<Box<dyn Inner>>,
 }
 
 impl Appv2 {
     pub(crate) fn new() -> Self {
+        let inners: Vec<Box<dyn Inner>> = vec![
+            Box::new(SpringBootInner::new()),
+            Box::new(WipInner {}),
+            Box::new(WipInner {}),
+            Box::new(WipInner {}),
+        ];
         Self {
             selected: ProjectType::default(),
             focus_left_side: true,
+            inners,
         }
     }
 }
@@ -59,10 +67,6 @@ fn ui(frame: &mut Frame, app: &Appv2) {
         main_layout[0],
         &mut ListState::default().with_selected(Some(app.selected.num())),
     );
-    let render: &dyn Render = match app.selected {
-        ProjectType::SpringBoot => &SpringBootInner::new(),
-        _ => &WipInner {},
-    };
     let right_block = Block::default()
         .title(app.selected.to_string())
         .borders(Borders::ALL)
@@ -72,13 +76,14 @@ fn ui(frame: &mut Frame, app: &Appv2) {
             Color::Red
         }));
     frame.render_widget(&right_block, main_layout[1]);
-    render.render(frame, app, right_block.inner(main_layout[1]));
+    let inner = app.inners[app.selected.num()].as_ref();
+    inner.render(frame, app, right_block.inner(main_layout[1]));
 
     // 底部帮助栏
     let help_bar = Paragraph::new(if app.focus_left_side {
-        "j/k: move | Enter: choose | q: quit"
+        "j/k: move | Enter: choose | q: quit".to_string()
     } else {
-        "Esc: focus back to left"
+        format!("{}Esc: focus back to left", inner.bottom_help_message())
     })
     .style(Style::default().fg(Color::Gray))
     .alignment(Alignment::Center);
@@ -96,33 +101,23 @@ pub(crate) fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut Appv2) -
         terminal.draw(|f| ui(f, app))?;
         // 处理输入事件
         if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('q') => {
-                    if app.focus_left_side {
-                        return Ok(());
-                    }
+            if app.focus_left_side {
+                match key.code {
+                    KeyCode::Char('q') => return Ok(()),
+                    KeyCode::Char('j') => app.selected = app.selected.next(),
+                    KeyCode::Char('k') => app.selected = app.selected.prev(),
+                    KeyCode::Enter => app.focus_left_side = false,
+                    _ => {}
                 }
-                KeyCode::Char('j') => {
-                    if app.focus_left_side {
-                        app.selected = app.selected.next();
-                    }
+            } else {
+                let inner = app.inners[app.selected.num()].as_mut();
+                let res = inner.handle_keyevent(key);
+                if !res.esc_handled && key.code == KeyCode::Esc {
+                    app.focus_left_side = true;
                 }
-                KeyCode::Char('k') => {
-                    if app.focus_left_side {
-                        app.selected = app.selected.prev();
-                    }
+                if res.exit {
+                    inner.create_and_edit()?;
                 }
-                KeyCode::Enter => {
-                    if app.focus_left_side {
-                        app.focus_left_side = false;
-                    }
-                }
-                KeyCode::Esc => {
-                    if !app.focus_left_side {
-                        app.focus_left_side = true;
-                    }
-                }
-                _ => {}
             }
         }
     }
