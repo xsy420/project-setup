@@ -213,10 +213,14 @@ impl Inner for SpringBootInner {
             .extract(&self.path)
             .context("Failed to extract ZIP archive")?;
 
-        println!("create {}", self.name);
         self.editor.run(
             self.path.join(&self.name),
-            "src/main/java/com/example/demo/DemoApplication.java".to_string(),
+            format!(
+                "src/main/java/{}/{}/{}Application.java",
+                self.group_id.replace(".", "/"),
+                self.artifact_id,
+                self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..]
+            ),
         )?;
         Ok(())
     }
