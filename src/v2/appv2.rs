@@ -63,18 +63,16 @@ fn ui(frame: &mut Frame, app: &Appv2) {
         ProjectType::SpringBoot => &SpringBootInner::new(),
         _ => &WipInner {},
     };
-    frame.render_widget(
-        Block::default()
-            .title(app.selected.to_string())
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(if app.focus_left_side {
-                Color::LightBlue
-            } else {
-                Color::Red
-            })),
-        main_layout[1],
-    );
-    render.render(frame, app, main_layout[1]);
+    let right_block = Block::default()
+        .title(app.selected.to_string())
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(if app.focus_left_side {
+            Color::LightBlue
+        } else {
+            Color::Red
+        }));
+    frame.render_widget(&right_block, main_layout[1]);
+    render.render(frame, app, right_block.inner(main_layout[1]));
 
     // 底部帮助栏
     let help_bar = Paragraph::new(if app.focus_left_side {
