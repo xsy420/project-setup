@@ -217,7 +217,7 @@ impl Inner for SpringBootInner {
             self.path.join(&self.name),
             format!(
                 "src/main/java/{}/{}/{}Application.java",
-                self.group_id.replace(".", "/"),
+                self.group_id.replace('.', "/"),
                 self.artifact_id,
                 self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..]
             ),
