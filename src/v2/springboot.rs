@@ -5,6 +5,8 @@ use super::inner::{Inner, InnerHandleKeyEventOutput};
 use super::{Appv2, focus::Focus};
 use anyhow::{Context, Result};
 use crossterm::event::{KeyCode, KeyEvent};
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use ratatui::style::Color;
 use ratatui::{
     Frame,
@@ -12,11 +14,27 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Paragraph},
 };
 use reqwest::blocking::Client;
-use std::path::PathBuf;
-use std::{env, fs, io};
+use std::{env, fmt::Debug, fs, io, path::PathBuf};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use zip::ZipArchive;
 
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, FromPrimitive, EnumIter)]
+enum SpringBootField {
+    Name,
+    Generator,
+    GroupId,
+    ArtifactId,
+    BootVersion,
+    JavaVersion,
+    KotlinVersion,
+    Editor,
+    Vcs,
+    Dependencies,
+    Path,
+}
+
+#[derive(Default, Debug)]
 #[allow(dead_code)]
 enum Generator {
     #[default]
@@ -31,29 +49,46 @@ pub(crate) struct SpringBootInner {
     artifact_id: String,
     boot_version: String,
     java_version: String,
-    kotlin_version: Option<String>,
+    kotlin_version: String,
     editor: Editor,
     vcs: Vcs,
     dependencies: Vec<String>,
     path: PathBuf,
     focus: Focus,
+    focus_index: usize,
 }
 
 impl SpringBootInner {
     pub(crate) fn new() -> Self {
         Self {
-            name: String::new(),
+            name: "demo".to_string(),
             generator: Generator::default(),
-            group_id: String::new(),
-            artifact_id: String::new(),
-            boot_version: String::new(),
-            java_version: String::new(),
-            kotlin_version: None,
+            group_id: "com.example".to_string(),
+            artifact_id: "demo".to_string(),
+            boot_version: "3.3.0".to_string(),
+            java_version: "17".to_string(),
+            kotlin_version: "2.1.20".to_string(),
             editor: Editor::default(),
             vcs: Vcs::default(),
             dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
             focus: Focus::new(),
+            focus_index: 0,
+        }
+    }
+    fn get_field(&self, field: SpringBootField) -> &dyn Debug {
+        match field {
+            SpringBootField::Name => &self.name,
+            SpringBootField::Generator => &self.generator,
+            SpringBootField::GroupId => &self.group_id,
+            SpringBootField::ArtifactId => &self.artifact_id,
+            SpringBootField::BootVersion => &self.boot_version,
+            SpringBootField::JavaVersion => &self.java_version,
+            SpringBootField::KotlinVersion => &self.kotlin_version,
+            SpringBootField::Editor => &self.editor,
+            SpringBootField::Vcs => &self.vcs,
+            SpringBootField::Dependencies => &self.dependencies,
+            SpringBootField::Path => &self.path,
         }
     }
 }
@@ -88,62 +123,45 @@ impl Inner for SpringBootInner {
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)]);
         for i in (0..labels.len()).step_by(2) {
-            let (half, left, right) = (i / 2, i, i + 1);
-            let line_layout = split_line_layout.split(form_layout[half]);
-            let (left_full_layout, right_full_layout) = (line_layout[0], line_layout[1]);
-            // 标签
-            let mut label_input_area = split_label_input_layout.split(left_full_layout);
-            f.render_widget(
-                Paragraph::new(labels[left]).centered().block(
-                    Block::default()
-                        .borders(Borders::all())
-                        .border_type(BorderType::Thick),
-                ),
-                split_input_error_layout.split(label_input_area[0])[1],
-            );
-            f.render_widget(
-                Paragraph::new(if left == 0 {
-                    if self.name.is_empty() {
-                        format!("Please input {}", labels[left])
-                    } else {
-                        self.name.to_string()
-                    }
-                } else {
-                    format!("Please input {}", labels[left])
-                })
-                .style(if left == 0 && self.name.is_empty() {
-                    Color::Gray
-                } else {
-                    Color::default()
-                })
-                .block(
-                    Block::new()
-                        .borders(Borders::ALL)
-                        .border_style(if left == 0 && !app.focus_left_side {
-                            Color::Red
-                        } else {
-                            Color::default()
-                        })
-                        .border_type(BorderType::Thick),
-                ),
-                split_input_error_layout.split(label_input_area[1])[1],
-            );
-
-            if right != labels.len() {
-                label_input_area = split_label_input_layout.split(right_full_layout);
+            let line_layout = split_line_layout.split(form_layout[i / 2]);
+            for side in 0..2 {
+                let index = i + side;
+                if index == labels.len() {
+                    break;
+                }
+                let side_line_layout = line_layout[side];
+                let label_input_area = split_label_input_layout.split(side_line_layout);
                 f.render_widget(
-                    Paragraph::new(labels[right]).centered().block(
+                    Paragraph::new(labels[index]).centered().block(
                         Block::default()
                             .borders(Borders::all())
                             .border_type(BorderType::Thick),
                     ),
                     split_input_error_layout.split(label_input_area[0])[1],
                 );
+                let field_value = self.get_field(SpringBootField::from_usize(index).unwrap());
+                let field_string_value = format!("{field_value:?}").replace('"', "");
 
                 f.render_widget(
-                    Paragraph::new(format!("Please input {}", labels[right])).block(
+                    Paragraph::new(if field_string_value.is_empty() {
+                        format!("Please input {}", labels[index])
+                    } else {
+                        field_string_value.clone()
+                    })
+                    .centered()
+                    .style(if field_string_value.is_empty() {
+                        Color::Gray
+                    } else {
+                        Color::default()
+                    })
+                    .block(
                         Block::new()
                             .borders(Borders::ALL)
+                            .border_style(if index == self.focus_index && !app.focus_left_side {
+                                Color::Red
+                            } else {
+                                Color::default()
+                            })
                             .border_type(BorderType::Thick),
                     ),
                     split_input_error_layout.split(label_input_area[1])[1],
@@ -152,18 +170,50 @@ impl Inner for SpringBootInner {
         }
     }
     fn bottom_help_message(&self) -> String {
-        String::new()
+        "tab: focus next item | shift+tab: focus prev item | Enter: confirm to create project | "
+            .to_string()
     }
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
+        let field_len = SpringBootField::iter().count();
         match key.code {
-            KeyCode::Char(c) => {
-                self.name.push(c);
-            }
-            KeyCode::Backspace => {
-                self.name.pop();
-            }
+            KeyCode::Char(c) => match self.focus_index {
+                0 => self.name.push(c),
+                2 => self.group_id.push(c),
+                3 => self.artifact_id.push(c),
+                4 => self.boot_version.push(c),
+                5 => self.java_version.push(c),
+                6 => self.kotlin_version.push(c),
+                _ => {}
+            },
+            KeyCode::Backspace => match self.focus_index {
+                0 => {
+                    self.name.pop();
+                }
+                2 => {
+                    self.group_id.pop();
+                }
+                3 => {
+                    self.artifact_id.pop();
+                }
+                4 => {
+                    self.boot_version.pop();
+                }
+                5 => {
+                    self.java_version.pop();
+                }
+                6 => {
+                    self.kotlin_version.pop();
+                }
+                _ => {}
+            },
             KeyCode::Enter => {
                 return InnerHandleKeyEventOutput::default().with_exited();
+            }
+            KeyCode::Tab => {
+                self.focus_index = (self.focus_index + 1) % field_len;
+            }
+            KeyCode::BackTab => {
+                self.focus_index = (self.focus_index - 1 + field_len) % field_len;
             }
             _ => {}
         }
