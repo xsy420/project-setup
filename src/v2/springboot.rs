@@ -213,7 +213,7 @@ impl Inner for SpringBootInner {
                 self.focus_index = (self.focus_index + 1) % field_len;
             }
             KeyCode::BackTab => {
-                self.focus_index = (self.focus_index - 1 + field_len) % field_len;
+                self.focus_index = (self.focus_index + field_len - 1) % field_len;
             }
             _ => {}
         }
