@@ -5,6 +5,7 @@ mod editor;
 mod focus_input;
 mod language;
 mod project_config;
+mod v2;
 // mod project_packaging;
 mod project_type;
 mod vcs;
@@ -36,7 +37,12 @@ fn main() -> Result<()> {
 
     // 创建应用
     let mut app = ProjectSetupApp::new();
-    let res = app::run_app(&mut terminal, &mut app);
+    let mut res = app::run_app(&mut terminal, &mut app);
+    if let Err(err) = res {
+        println!("{err:?}");
+    }
+    let mut appv2 = v2::Appv2::new();
+    res = v2::run_app(&mut terminal, &mut appv2);
 
     // 清理终端
     disable_raw_mode()?;
