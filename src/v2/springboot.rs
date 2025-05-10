@@ -35,6 +35,28 @@ enum SpringBootField {
     Path,
 }
 
+impl SpringBootField {
+    fn vaildate_string(self, value: &mut str) -> String {
+        match self {
+            Self::GroupId => {
+                if value.ends_with('.') {
+                    "group_id cannot end with '.'".to_string()
+                } else {
+                    String::new()
+                }
+            }
+            Self::ArtifactId => {
+                if value.ends_with('.') {
+                    "artifact_id cannot end with '.'".to_string()
+                } else {
+                    String::new()
+                }
+            }
+            _ => String::new(),
+        }
+    }
+}
+
 #[derive(Default, Display, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum)]
 #[numbered_enum(loop_within = 2)]
 #[allow(dead_code)]
@@ -58,6 +80,7 @@ pub(crate) struct SpringBootInner {
     path: PathBuf,
     focus: Focus,
     focus_index: usize,
+    error_messages: Vec<String>,
 }
 
 impl SpringBootInner {
@@ -76,10 +99,11 @@ impl SpringBootInner {
             path: env::current_dir().unwrap(),
             focus: Focus::new(),
             focus_index: 0,
+            error_messages: SpringBootField::iter().map(|_| String::new()).collect(),
         }
     }
-    fn get_focus_field_mut(&mut self) -> Result<&mut String, String> {
-        match SpringBootField::from_usize(self.focus_index).unwrap() {
+    fn get_focus_field_mut(&mut self, field: SpringBootField) -> Result<&mut String, String> {
+        match field {
             SpringBootField::Name => Ok(&mut self.name),
             SpringBootField::GroupId => Ok(&mut self.group_id),
             SpringBootField::ArtifactId => Ok(&mut self.artifact_id),
@@ -179,6 +203,12 @@ impl Inner for SpringBootInner {
                     ),
                     split_input_error_layout.split(label_input_area[1])[1],
                 );
+                if !self.error_messages[index].is_empty() {
+                    f.render_widget(
+                        Paragraph::new(self.error_messages[index].clone()).style(Color::Red),
+                        split_input_error_layout.split(label_input_area[1])[2],
+                    );
+                }
             }
         }
     }
@@ -188,9 +218,13 @@ impl Inner for SpringBootInner {
     }
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
         let field_len = SpringBootField::iter().count();
+        let field = SpringBootField::from_usize(self.focus_index).unwrap();
         match key.code {
-            KeyCode::Char(c) => match self.get_focus_field_mut() {
-                Ok(x) => x.push(c),
+            KeyCode::Char(c) => match self.get_focus_field_mut(field) {
+                Ok(x) => {
+                    x.push(c);
+                    self.error_messages[self.focus_index] = field.vaildate_string(x);
+                }
                 Err(_) => match self.focus_index {
                     1 => match c {
                         'j' => self.generator = self.generator.next(),
@@ -211,7 +245,9 @@ impl Inner for SpringBootInner {
                 },
             },
             KeyCode::Backspace => {
-                self.get_focus_field_mut().ok().unwrap().pop();
+                self.get_focus_field_mut(field).ok().unwrap().pop();
+                self.error_messages[self.focus_index] =
+                    field.vaildate_string(self.get_focus_field_mut(field).unwrap());
             }
             KeyCode::Enter => {
                 return InnerHandleKeyEventOutput::default().with_exited();
