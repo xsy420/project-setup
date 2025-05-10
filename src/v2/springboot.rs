@@ -17,7 +17,7 @@ use ratatui::{
 use reqwest::blocking::Client;
 use std::{env, fmt::Debug, fs, io, path::PathBuf};
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use strum_macros::{Display, EnumIter};
 use zip::ZipArchive;
 
 #[derive(Debug, Clone, Copy, FromPrimitive, EnumIter)]
@@ -35,7 +35,7 @@ enum SpringBootField {
     Path,
 }
 
-#[derive(Default, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum)]
+#[derive(Default, Display, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum)]
 #[numbered_enum(loop_within = 2)]
 #[allow(dead_code)]
 enum Generator {
@@ -232,11 +232,25 @@ impl Inner for SpringBootInner {
         self.vcs.init_vcs_repo(&self.name, &self.path)?;
         let client = Client::new();
         let params = [
-            ("type", "maven-project"),
-            // ("language", &config.language.to_string().to_lowercase()),
-            // ("javaVersion", &config.language_version),
+            ("groupId", self.group_id.as_str()),
+            ("artifactId", self.artifact_id.as_str()),
+            (
+                "type",
+                &format!("{}-project", self.generator.to_string().to_lowercase()),
+            ),
+            ("name", self.name.as_str()),
+            (
+                "language",
+                if self.kotlin_version.is_empty() {
+                    "java"
+                } else {
+                    "kotlin"
+                },
+            ),
+            ("javaVersion", self.java_version.as_str()),
             ("bootVersion", self.boot_version.as_str()),
             ("baseDir", self.name.as_str()),
+            ("dependencies", &self.dependencies.join(",")),
         ];
         let bytes = client
             .post("https://start.spring.io/starter.zip")
