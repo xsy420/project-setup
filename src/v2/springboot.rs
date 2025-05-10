@@ -92,7 +92,7 @@ impl SpringBootInner {
             artifact_id: "demo".to_string(),
             boot_version: "3.3.0".to_string(),
             java_version: "17".to_string(),
-            kotlin_version: "2.1.20".to_string(),
+            kotlin_version: String::new(),
             editor: Editor::default(),
             vcs: Vcs::default(),
             dependencies: vec![String::new()],
@@ -311,10 +311,15 @@ impl Inner for SpringBootInner {
         self.editor.run(
             self.path.join(&self.name),
             format!(
-                "src/main/java/{}/{}/{}Application.java",
+                "src/main/java/{}/{}/{}Application.{}",
                 self.group_id.replace('.', "/"),
                 self.artifact_id,
-                self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..]
+                self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..],
+                if self.kotlin_version.is_empty() {
+                    "kt"
+                } else {
+                    "java"
+                }
             ),
         )?;
         Ok(())
