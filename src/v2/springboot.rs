@@ -5,8 +5,9 @@ use super::inner::{Inner, InnerHandleKeyEventOutput};
 use super::{Appv2, focus::Focus};
 use anyhow::{Context, Result};
 use crossterm::event::{KeyCode, KeyEvent};
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
+use project_setup::LoopableNumberedEnum;
 use ratatui::style::Color;
 use ratatui::{
     Frame,
@@ -34,7 +35,8 @@ enum SpringBootField {
     Path,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum)]
+#[numbered_enum(loop_within = 2)]
 #[allow(dead_code)]
 enum Generator {
     #[default]
@@ -74,6 +76,17 @@ impl SpringBootInner {
             path: env::current_dir().unwrap(),
             focus: Focus::new(),
             focus_index: 0,
+        }
+    }
+    fn get_focus_field_mut(&mut self) -> Result<&mut String, String> {
+        match SpringBootField::from_usize(self.focus_index).unwrap() {
+            SpringBootField::Name => Ok(&mut self.name),
+            SpringBootField::GroupId => Ok(&mut self.group_id),
+            SpringBootField::ArtifactId => Ok(&mut self.artifact_id),
+            SpringBootField::BootVersion => Ok(&mut self.boot_version),
+            SpringBootField::JavaVersion => Ok(&mut self.java_version),
+            SpringBootField::KotlinVersion => Ok(&mut self.kotlin_version),
+            _ => Err(String::new()),
         }
     }
     fn get_field(&self, field: SpringBootField) -> &dyn Debug {
@@ -176,36 +189,30 @@ impl Inner for SpringBootInner {
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
         let field_len = SpringBootField::iter().count();
         match key.code {
-            KeyCode::Char(c) => match self.focus_index {
-                0 => self.name.push(c),
-                2 => self.group_id.push(c),
-                3 => self.artifact_id.push(c),
-                4 => self.boot_version.push(c),
-                5 => self.java_version.push(c),
-                6 => self.kotlin_version.push(c),
-                _ => {}
+            KeyCode::Char(c) => match self.get_focus_field_mut() {
+                Ok(x) => x.push(c),
+                Err(_) => match self.focus_index {
+                    1 => match c {
+                        'j' => self.generator = self.generator.next(),
+                        'k' => self.generator = self.generator.prev(),
+                        _ => {}
+                    },
+                    7 => match c {
+                        'j' => self.editor = self.editor.next(),
+                        'k' => self.editor = self.editor.prev(),
+                        _ => {}
+                    },
+                    8 => match c {
+                        'j' => self.vcs = self.vcs.next(),
+                        'k' => self.vcs = self.vcs.prev(),
+                        _ => {}
+                    },
+                    _ => unreachable!(),
+                },
             },
-            KeyCode::Backspace => match self.focus_index {
-                0 => {
-                    self.name.pop();
-                }
-                2 => {
-                    self.group_id.pop();
-                }
-                3 => {
-                    self.artifact_id.pop();
-                }
-                4 => {
-                    self.boot_version.pop();
-                }
-                5 => {
-                    self.java_version.pop();
-                }
-                6 => {
-                    self.kotlin_version.pop();
-                }
-                _ => {}
-            },
+            KeyCode::Backspace => {
+                self.get_focus_field_mut().ok().unwrap().pop();
+            }
             KeyCode::Enter => {
                 return InnerHandleKeyEventOutput::default().with_exited();
             }
