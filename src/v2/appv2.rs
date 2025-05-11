@@ -1,7 +1,7 @@
 use crate::focus_input::FocusInput;
 use crate::project_type::ProjectType;
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
     Frame, Terminal,
     layout::{Alignment, Constraint, Direction, Layout},
@@ -101,6 +101,9 @@ pub(crate) fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut Appv2) -
         terminal.draw(|f| ui(f, app))?;
         // 处理输入事件
         if let Event::Key(key) = event::read()? {
+            if key.kind != KeyEventKind::Press {
+                continue;
+            }
             if app.focus_left_side {
                 match key.code {
                     KeyCode::Char('q') => return Ok(()),
