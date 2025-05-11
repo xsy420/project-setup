@@ -11,7 +11,7 @@ use ratatui::{
 };
 use strum::IntoEnumIterator;
 
-use super::{inner::Inner, springboot::SpringBootInner, wip::WipInner};
+use super::{Inner, SpringBootInner, WipInner};
 
 pub(crate) struct Appv2 {
     pub(crate) selected: ProjectType,

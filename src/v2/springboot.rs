@@ -1,8 +1,7 @@
 use crate::editor::Editor;
 use crate::vcs::Vcs;
 
-use super::inner::{Inner, InnerHandleKeyEventOutput};
-use super::{Appv2, focus::Focus};
+use super::{Appv2, Focus, Inner, InnerHandleKeyEventOutput};
 use anyhow::{Context, Result};
 use crossterm::event::{KeyCode, KeyEvent};
 use num_derive::{FromPrimitive, ToPrimitive};

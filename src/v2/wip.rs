@@ -1,14 +1,10 @@
+use super::{Appv2, Inner, InnerHandleKeyEventOutput};
 use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout},
     style::{Style, Stylize},
 };
 use tui_big_text::{BigText, PixelSize};
-
-use super::{
-    Appv2,
-    inner::{Inner, InnerHandleKeyEventOutput},
-};
 
 pub(crate) struct WipInner {}
 impl Inner for WipInner {
