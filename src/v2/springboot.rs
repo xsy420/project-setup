@@ -311,7 +311,12 @@ impl Inner for SpringBootInner {
         self.editor.run(
             self.path.join(&self.name),
             format!(
-                "src/main/java/{}/{}/{}Application.{}",
+                "src/main/{}/{}/{}/{}Application.{}",
+                if self.kotlin_version.is_empty() {
+                    "kotlin"
+                } else {
+                    "java"
+                },
                 self.group_id.replace('.', "/"),
                 self.artifact_id,
                 self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..],
