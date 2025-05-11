@@ -267,6 +267,16 @@ impl Inner for SpringBootInner {
         fs::create_dir_all(&project_path)?;
         self.vcs.init_vcs_repo(&self.name, &self.path)?;
         let client = Client::new();
+        let language = if self.kotlin_version.is_empty() {
+            "java"
+        } else {
+            "kotlin"
+        };
+        let extension = if self.kotlin_version.is_empty() {
+            "kt"
+        } else {
+            "java"
+        };
         let params = [
             ("groupId", self.group_id.as_str()),
             ("artifactId", self.artifact_id.as_str()),
@@ -275,14 +285,7 @@ impl Inner for SpringBootInner {
                 &format!("{}-project", self.generator.to_string().to_lowercase()),
             ),
             ("name", self.name.as_str()),
-            (
-                "language",
-                if self.kotlin_version.is_empty() {
-                    "java"
-                } else {
-                    "kotlin"
-                },
-            ),
+            ("language", language),
             ("javaVersion", self.java_version.as_str()),
             ("bootVersion", self.boot_version.as_str()),
             ("baseDir", self.name.as_str()),
@@ -312,19 +315,11 @@ impl Inner for SpringBootInner {
             self.path.join(&self.name),
             format!(
                 "src/main/{}/{}/{}/{}Application.{}",
-                if self.kotlin_version.is_empty() {
-                    "kotlin"
-                } else {
-                    "java"
-                },
+                language,
                 self.group_id.replace('.', "/"),
                 self.artifact_id,
                 self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..],
-                if self.kotlin_version.is_empty() {
-                    "kt"
-                } else {
-                    "java"
-                }
+                extension
             ),
         )?;
         Ok(())
