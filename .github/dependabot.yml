@@ -5,8 +5,6 @@ updates:
     schedule:
       interval: "monthly"         # 检查频率（daily/weekly/monthly）
     open-pull-requests-limit: 5 # 同时打开的 PR 最大数量
-    reviewers:                 # （可选）指定评审者
-      - "xsy420"
     assignees:                 # （可选）指定负责人
       - "xsy420"
     labels:                    # （可选）自动添加标签
