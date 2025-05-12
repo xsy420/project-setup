@@ -1,7 +1,6 @@
 use super::Appv2;
 use anyhow::Result;
-use crossterm::event::KeyEvent;
-use ratatui::{Frame, layout::Rect};
+use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect};
 
 #[derive(Default)]
 pub(crate) struct InnerHandleKeyEventOutput {

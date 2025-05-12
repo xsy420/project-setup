@@ -1,8 +1,8 @@
 use crate::common::{FocusInput, ProjectType};
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
     Frame, Terminal,
+    crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Direction, Layout},
     prelude::*,
     style::{Color, Modifier, Style},

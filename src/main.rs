@@ -3,11 +3,14 @@ mod v1;
 mod v2;
 use anyhow::Result;
 use clap::Parser;
-use crossterm::{
-    execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+use ratatui::{
+    Terminal,
+    crossterm::{
+        execute,
+        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    },
+    prelude::*,
 };
-use ratatui::{Terminal, prelude::*};
 use std::io::{self};
 use v1::{ProjectSetupApp, run_app};
 
