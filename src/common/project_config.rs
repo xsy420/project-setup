@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 
-use crate::{editor::Editor, language::Language, project_type::ProjectType, vcs::Vcs};
+use super::{Editor, Language, ProjectType, Vcs};
 
 #[derive(Debug)]
 #[allow(dead_code)]

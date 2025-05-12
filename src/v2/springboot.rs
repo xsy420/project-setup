@@ -1,7 +1,5 @@
-use crate::editor::Editor;
-use crate::vcs::Vcs;
-
 use super::{Appv2, Focus, Inner, InnerHandleKeyEventOutput};
+use crate::common::{Editor, Vcs};
 use anyhow::{Context, Result};
 use crossterm::event::{KeyCode, KeyEvent};
 use num_derive::{FromPrimitive, ToPrimitive};

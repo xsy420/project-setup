@@ -1,4 +1,4 @@
-use crate::language::Language;
+use super::Language;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup_derive::LoopableNumberedEnum;

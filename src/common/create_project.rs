@@ -1,10 +1,9 @@
 use std::{fs, io};
 
+use super::{Language, ProjectConfig, ProjectType};
 use anyhow::{Context, Error};
 use reqwest::blocking::Client;
 use zip::ZipArchive;
-
-use crate::{language::Language, project_config::ProjectConfig, project_type::ProjectType};
 
 pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
     let project_path = config.path.join(&config.name);
