@@ -1,8 +1,7 @@
 use super::{Language, ProjectConfig, ProjectType};
-use anyhow::{Context, Error};
-use reqwest::blocking::Client;
-use std::{fs, io};
-use zip::ZipArchive;
+use crate::features::{download_file, unzip};
+use anyhow::Error;
+use std::{env, fs};
 pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
     let project_path = config.path.join(&config.name);
     fs::create_dir_all(&project_path)?;
@@ -10,7 +9,6 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
     let mut main_file_to_edit = "";
     match config.project_type {
         ProjectType::SpringBoot => {
-            let client = Client::new();
             let params = [
                 ("type", "maven-project"),
                 ("language", &config.language.to_string().to_lowercase()),
@@ -18,22 +16,14 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
                 ("bootVersion", &config.project_version),
                 ("baseDir", &config.name),
             ];
-            let bytes = client
-                .post("https://start.spring.io/starter.zip")
-                .form(&params)
-                .send()
-                .context("Failed to send request to Spring Boot starter")?
-                .bytes()
-                .context("Failed to read response bytes")?;
-            // 直接在内存中解压 ZIP
-            let mut archive =
-                ZipArchive::new(io::Cursor::new(bytes)).context("Failed to parse ZIP archive")?;
-            // 确保目标目录存在
-            fs::create_dir_all(&config.path).context("Failed to create project directory")?;
-            // 解压所有文件到目标目录
-            archive
-                .extract(&config.path)
-                .context("Failed to extract ZIP archive")?;
+            let temp_zip_file = env::temp_dir().join("starter.zip");
+            download_file(
+                "https://start.spring.io/starter.zip",
+                &params,
+                &temp_zip_file,
+            )?;
+            unzip(&temp_zip_file, &config.path)?;
+            fs::remove_file(&temp_zip_file)?;
             main_file_to_edit = "src/main/java/com/example/demo/DemoApplication.java";
         }
         ProjectType::CMake => {
