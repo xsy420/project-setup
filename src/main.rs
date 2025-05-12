@@ -18,14 +18,6 @@ use v1::{ProjectSetupApp, run_app};
 #[derive(Parser)]
 #[command(version, about)]
 struct Args {}
-#[cfg(all(feature = "reqwest", feature = "external_downloader"))]
-compile_error!(
-    "Features `reqwest` and `external_downloader` are mutually exclusive and cannot be enabled together"
-);
-#[cfg(all(feature = "zip", feature = "external_zip"))]
-compile_error!(
-    "Features `zip` and `external_zip` are mutually exclusive and cannot be enabled together"
-);
 fn main() -> Result<()> {
     Args::parse();
     // 设置终端

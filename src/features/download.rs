@@ -1,10 +1,10 @@
 use anyhow::Error;
-#[cfg(not(feature = "external_downloader"))]
+#[cfg(feature = "reqwest")]
 use reqwest::blocking::Client;
 use std::path::PathBuf;
-#[cfg(feature = "external_downloader")]
+#[cfg(not(feature = "reqwest"))]
 use std::process::Command;
-#[cfg(feature = "external_downloader")]
+#[cfg(not(feature = "reqwest"))]
 pub(crate) fn download_file(
     url: &str,
     params: &[(&str, &str)],
@@ -44,7 +44,7 @@ pub(crate) fn download_file(
     }
     Ok(())
 }
-#[cfg(not(feature = "external_downloader"))]
+#[cfg(feature = "reqwest")]
 pub(crate) fn download_file(
     url: &str,
     params: &[(&str, &str)],

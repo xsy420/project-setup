@@ -1,15 +1,15 @@
 use anyhow::Error;
-#[cfg(not(feature = "external_zip"))]
+#[cfg(feature = "zip")]
 use std::fs::File;
-#[cfg(feature = "external_zip")]
+#[cfg(not(feature = "zip"))]
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
-#[cfg(feature = "external_zip")]
+#[cfg(not(feature = "zip"))]
 use std::process::Command;
-#[cfg(not(feature = "external_zip"))]
+#[cfg(feature = "zip")]
 use zip::ZipArchive;
-#[cfg(feature = "external_zip")]
+#[cfg(not(feature = "zip"))]
 pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Error> {
     let zip_path = Path::new(zip_path).canonicalize()?;
     let output_dir = Path::new(output_dir).canonicalize()?;
@@ -65,7 +65,7 @@ pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Erro
         "No available zip extraction tool found (tried: unzip, 7z, tar, PowerShell)",
     ))
 }
-#[cfg(not(feature = "external_zip"))]
+#[cfg(feature = "zip")]
 pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Error> {
     let zip_file = File::open(zip_path)?;
     let mut archive = ZipArchive::new(zip_file)?;

@@ -20,9 +20,7 @@ strip = true
 
 [features]
 # default = ["reqwest", "zip"]
-default = ["external_downloader", "external_zip"]
-external_downloader = []
-external_zip = []
+default = []
 reqwest = ["dep:reqwest"]
 zip = ["dep:zip"]
 [dependencies]
