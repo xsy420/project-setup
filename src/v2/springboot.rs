@@ -75,6 +75,7 @@ pub(crate) struct SpringBootInner {
     path: PathBuf,
     focus: Focus,
     focus_index: usize,
+    tip_messages: Vec<String>,
     error_messages: Vec<String>,
 }
 impl SpringBootInner {
@@ -93,6 +94,22 @@ impl SpringBootInner {
             path: env::current_dir().unwrap(),
             focus: Focus::new(),
             focus_index: 0,
+            tip_messages: [
+                "Please input the name of this project",
+                "Use j/k to scroll between Maven or Gradle",
+                "Please input the group_id of this project",
+                "Please input the artifact_id of this project",
+                "Please input the boot_version of this project",
+                "Please input the java_version of this project",
+                "Please input the kotlin_version of this project",
+                "Use j/k to scroll editor",
+                "Use j/k to scroll Vcs tool",
+                "Please input the dependencies of this project",
+                "Please input the path of this project",
+            ]
+            .iter()
+            .map(|x| (*x).to_string())
+            .collect(),
             error_messages: SpringBootField::iter().map(|_| String::new()).collect(),
         }
     }
@@ -151,7 +168,7 @@ impl Inner for SpringBootInner {
         let split_label_input_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Length(20), Constraint::Min(0)]);
-        let split_input_error_layout = Layout::default()
+        let split_tip_input_error_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)]);
         for i in (0 .. labels.len()).step_by(2) {
@@ -169,8 +186,16 @@ impl Inner for SpringBootInner {
                             .borders(Borders::all())
                             .border_type(BorderType::Thick),
                     ),
-                    split_input_error_layout.split(label_input_area[0])[1],
+                    split_tip_input_error_layout.split(label_input_area[0])[1],
                 );
+                if !app.focus_left_side && index == self.focus_index {
+                    f.render_widget(
+                        Paragraph::new(self.tip_messages[index].clone())
+                            .style(Color::Blue)
+                            .centered(),
+                        split_tip_input_error_layout.split(label_input_area[1])[0],
+                    );
+                }
                 let field_value = self.get_field(SpringBootField::from_usize(index).unwrap());
                 let field_string_value = format!("{field_value:?}").replace('"', "");
                 f.render_widget(
@@ -195,12 +220,12 @@ impl Inner for SpringBootInner {
                             })
                             .border_type(BorderType::Thick),
                     ),
-                    split_input_error_layout.split(label_input_area[1])[1],
+                    split_tip_input_error_layout.split(label_input_area[1])[1],
                 );
                 if !self.error_messages[index].is_empty() {
                     f.render_widget(
                         Paragraph::new(self.error_messages[index].clone()).style(Color::Red),
-                        split_input_error_layout.split(label_input_area[1])[2],
+                        split_tip_input_error_layout.split(label_input_area[1])[2],
                     );
                 }
             }
