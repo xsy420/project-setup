@@ -30,5 +30,3 @@ num-derive = "0.4.2"
 clap = { version = "4.5.38", features = ["derive"] }
 project_setup_derive = { path = "./project_setup_derive" }
 tui-big-text = "0.7.1"
-[dev-dependencies]
-crossterm = "0.29.0"
