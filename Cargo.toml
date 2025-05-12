@@ -18,11 +18,16 @@ strip = true
 [profile.dev]
 strip = true
 
+[features]
+# default = ["reqwest", "zip"]
+default = []
+reqwest = ["dep:reqwest"]
+zip = ["dep:zip"]
 [dependencies]
 ratatui = { version = "0.29.0", default-features = false, features = ["crossterm"]}
 anyhow = "1.0.98"
-reqwest = { version = "0.12.15", default-features = false, features = ["blocking", "default-tls"] }
-zip = { version = "2.6.1", default-features = false, features = ["deflate"] }
+reqwest = { version = "0.12.15", default-features = false, features = ["blocking", "default-tls"] , optional = true}
+zip = { version = "2.6.1", default-features = false, features = ["deflate"], optional = true }
 strum = "0.27.1"
 strum_macros = "0.27.1"
 num-traits = "0.2.19"

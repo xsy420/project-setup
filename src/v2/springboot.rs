@@ -1,6 +1,9 @@
 use super::{Appv2, Focus, Inner, InnerHandleKeyEventOutput};
-use crate::common::{Editor, Vcs};
-use anyhow::{Context, Result};
+use crate::{
+    common::{Editor, Vcs},
+    features::{download_file, unzip},
+};
+use anyhow::Result;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup::LoopableNumberedEnum;
@@ -11,11 +14,9 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, BorderType, Borders, Paragraph},
 };
-use reqwest::blocking::Client;
-use std::{env, fmt::Debug, fs, io, path::PathBuf};
+use std::{env, fmt::Debug, fs, path::PathBuf};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
-use zip::ZipArchive;
 #[derive(Debug, Clone, Copy, FromPrimitive, EnumIter)]
 enum SpringBootField {
     Name,
@@ -262,7 +263,6 @@ impl Inner for SpringBootInner {
         let project_path = self.path.join(&self.name);
         fs::create_dir_all(&project_path)?;
         self.vcs.init_vcs_repo(&self.name, &self.path)?;
-        let client = Client::new();
         let language = if self.kotlin_version.is_empty() {
             "java"
         } else {
@@ -287,22 +287,14 @@ impl Inner for SpringBootInner {
             ("baseDir", self.name.as_str()),
             ("dependencies", &self.dependencies.join(",")),
         ];
-        let bytes = client
-            .post("https://start.spring.io/starter.zip")
-            .form(&params)
-            .send()
-            .context("Failed to send request to Spring Boot starter")?
-            .bytes()
-            .context("Failed to read response bytes")?;
-        // 直接在内存中解压 ZIP
-        let mut archive =
-            ZipArchive::new(io::Cursor::new(bytes)).context("Failed to parse ZIP archive")?;
-        // 确保目标目录存在
-        fs::create_dir_all(&self.path).context("Failed to create project directory")?;
-        // 解压所有文件到目标目录
-        archive
-            .extract(&self.path)
-            .context("Failed to extract ZIP archive")?;
+        let temp_zip_file = env::temp_dir().join("starter.zip");
+        download_file(
+            "https://start.spring.io/starter.zip",
+            &params,
+            &temp_zip_file,
+        )?;
+        unzip(&temp_zip_file, &self.path)?;
+        fs::remove_file(&temp_zip_file)?;
         self.editor.run(
             self.path.join(&self.name),
             format!(
