@@ -4,7 +4,6 @@ use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup_derive::LoopableNumberedEnum;
 use std::{ffi::OsStr, path::PathBuf, process::Command};
 use strum_macros::{Display, EnumIter};
-
 #[derive(
     Debug,
     Default,
@@ -23,7 +22,6 @@ pub(crate) enum Vcs {
     Git,
     Svn,
 }
-
 impl Vcs {
     pub(crate) fn is_available(&self) -> bool {
         match self {
@@ -53,11 +51,9 @@ impl Vcs {
                 return Ok(());
             }
         }?; // The ? operator will early return if there's an error
-
         Ok(())
     }
 }
-
 impl AsRef<OsStr> for Vcs {
     fn as_ref(&self) -> &OsStr {
         OsStr::new(match self {

@@ -3,7 +3,6 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup_derive::LoopableNumberedEnum;
 use strum_macros::{Display, EnumIter};
-
 #[derive(
     Debug,
     Clone,
@@ -23,7 +22,6 @@ pub(crate) enum ProjectType {
     Maven,
     Cargo,
 }
-
 impl ProjectType {
     pub(crate) fn versions(&self) -> Vec<String> {
         match self {
@@ -36,6 +34,7 @@ impl ProjectType {
         .map(ToString::to_string)
         .collect()
     }
+
     pub(crate) fn languages(&self) -> Vec<Language> {
         match self {
             Self::CMake => vec![Language::C, Language::Cpp],

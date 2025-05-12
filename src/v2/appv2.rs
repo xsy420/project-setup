@@ -1,3 +1,4 @@
+use super::{Inner, SpringBootInner, WipInner};
 use crate::common::{FocusInput, ProjectType};
 use anyhow::Result;
 use ratatui::{
@@ -9,15 +10,11 @@ use ratatui::{
     widgets::{Block, Borders, List, ListState, Paragraph},
 };
 use strum::IntoEnumIterator;
-
-use super::{Inner, SpringBootInner, WipInner};
-
 pub(crate) struct Appv2 {
     pub(crate) selected: ProjectType,
     pub(crate) focus_left_side: bool,
     pub(crate) inners: Vec<Box<dyn Inner>>,
 }
-
 impl Appv2 {
     pub(crate) fn new() -> Self {
         let inners: Vec<Box<dyn Inner>> = vec![
@@ -33,7 +30,6 @@ impl Appv2 {
         }
     }
 }
-
 fn ui(frame: &mut Frame, app: &Appv2) {
     // 主布局 - 水平分割为左右两部分
     let main_layout = Layout::default()
@@ -41,7 +37,6 @@ fn ui(frame: &mut Frame, app: &Appv2) {
         .constraints([Constraint::Length(20), Constraint::Min(10)])
         .split(frame.area());
     let items: Vec<String> = ProjectType::iter().map(|x| x.to_string()).collect();
-
     // 左侧列表
     let list = List::new(items)
         .block(
@@ -60,7 +55,6 @@ fn ui(frame: &mut Frame, app: &Appv2) {
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("» ");
-
     frame.render_stateful_widget(
         list,
         main_layout[0],
@@ -77,7 +71,6 @@ fn ui(frame: &mut Frame, app: &Appv2) {
     frame.render_widget(&right_block, main_layout[1]);
     let inner = app.inners[app.selected.num()].as_ref();
     inner.render(frame, app, right_block.inner(main_layout[1]));
-
     // 底部帮助栏
     let help_bar = Paragraph::new(if app.focus_left_side {
         "j/k: move | Enter: choose | q: quit".to_string()
@@ -86,15 +79,12 @@ fn ui(frame: &mut Frame, app: &Appv2) {
     })
     .style(Style::default().fg(Color::Gray))
     .alignment(Alignment::Center);
-
     let bottom_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(0), Constraint::Length(1)])
         .split(frame.area());
-
     frame.render_widget(help_bar, bottom_layout[1]);
 }
-
 pub(crate) fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut Appv2) -> Result<()> {
     loop {
         terminal.draw(|f| ui(f, app))?;

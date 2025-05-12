@@ -5,7 +5,6 @@ use ratatui::{
     style::{Style, Stylize},
 };
 use tui_big_text::{BigText, PixelSize};
-
 pub(crate) struct WipInner {}
 impl Inner for WipInner {
     fn render(&self, f: &mut ratatui::Frame, _app: &Appv2, area: ratatui::prelude::Rect) {
@@ -30,12 +29,15 @@ impl Inner for WipInner {
                 .split(area)[1],
         );
     }
+
     fn bottom_help_message(&self) -> String {
         String::new()
     }
+
     fn handle_keyevent(&mut self, _key: KeyEvent) -> InnerHandleKeyEventOutput {
         InnerHandleKeyEventOutput::default()
     }
+
     fn create_and_edit(&self) -> anyhow::Result<()> {
         Ok(())
     }

@@ -1,9 +1,6 @@
-use std::rc::Rc;
-
 use crate::common::{
     AppDirection, Editor, FocusInput, Language, ProjectConfig, ProjectType, Vcs, create_project,
 };
-
 use anyhow::Result;
 use ratatui::{
     Terminal,
@@ -11,15 +8,13 @@ use ratatui::{
     prelude::*,
     widgets::{Block, List, ListItem, ListState, Paragraph},
 };
+use std::rc::Rc;
 use strum::IntoEnumIterator;
-
 type SwitchItemInListState<T> = dyn Fn(AppDirection, &mut ListState, Vec<T>) -> T;
-
 enum InputMode {
     Normal,
     Editing,
 }
-
 pub(crate) struct ProjectSetupApp {
     project_type_state: ListState,
     project_version_state: ListState,
@@ -40,7 +35,6 @@ pub(crate) struct ProjectSetupApp {
     msg: String,
     focus: FocusInput,
 }
-
 impl ProjectSetupApp {
     pub(crate) fn new() -> Self {
         Self {
@@ -129,14 +123,12 @@ impl ProjectSetupApp {
         self.focus = self.focus.prev();
     }
 }
-
 pub(crate) fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
     app: &mut ProjectSetupApp,
 ) -> Result<()> {
     loop {
         terminal.draw(|f| ui(f, app))?;
-
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 match app.input_mode {
@@ -221,7 +213,6 @@ pub(crate) fn run_app<B: Backend>(
         }
     }
 }
-
 fn ui(f: &mut Frame, app: &ProjectSetupApp) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -234,7 +225,6 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
     focus_list_item_ui(f, app, FocusInput::LanguageVersion, &chunks);
     focus_list_item_ui(f, app, FocusInput::Vcs, &chunks);
     focus_list_item_ui(f, app, FocusInput::Editor, &chunks);
-
     if app.show[FocusInput::Name.num()] {
         // 输入框样式
         let input_style = if app.config.name.is_empty() {
@@ -252,14 +242,12 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
             .style(input_style);
         f.render_widget(paragraph, chunks[FocusInput::Name.num()]);
     }
-
     if !app.msg.is_empty() {
         let error_text =
             Text::from(Line::from(app.msg.as_str())).style(Style::default().fg(Color::Red));
         let error_paragraph = Paragraph::new(error_text).alignment(Alignment::Center);
         f.render_widget(error_paragraph, chunks[FocusInput::ErrorMessage.num()]);
     }
-
     // 输入模式指示器
     let mode_text = match app.input_mode {
         InputMode::Normal => {
@@ -282,7 +270,6 @@ fn ui(f: &mut Frame, app: &ProjectSetupApp) {
     let mode_indicator = Paragraph::new(mode_text).block(Block::default());
     f.render_widget(mode_indicator, chunks[FocusInput::Bottom.num()]);
 }
-
 fn focus_list_item_ui(
     f: &mut Frame,
     app: &ProjectSetupApp,
@@ -320,12 +307,10 @@ fn focus_list_item_ui(
         .iter()
         .map(|i| ListItem::new(i.to_string()).style(Style::default()))
         .collect();
-
         let list = List::new(items)
             .block(app.focus.focus_border(focus))
             .highlight_style(Style::default().add_modifier(Modifier::BOLD))
             .highlight_symbol(">> ");
-
         f.render_stateful_widget(
             list,
             chunks[focus.num()],

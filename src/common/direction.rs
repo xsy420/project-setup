@@ -3,7 +3,6 @@ pub(crate) enum AppDirection {
     Next,
     Prev,
 }
-
 impl AppDirection {
     pub(crate) fn get_counter(self, i: Option<usize>, len: usize) -> usize {
         match i {

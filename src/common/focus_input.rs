@@ -22,7 +22,6 @@ pub(crate) enum FocusInput {
     ErrorMessage,
     Bottom,
 }
-
 impl FocusInput {
     pub(crate) fn title(self) -> String {
         match self {
@@ -52,6 +51,7 @@ impl FocusInput {
             Constraint::Min(0),
         ]
     }
+
     pub(crate) fn focus_border(&self, needed_focus: Self) -> Block {
         Block::default()
             .borders(Borders::ALL)

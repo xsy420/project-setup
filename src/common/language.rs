@@ -24,7 +24,6 @@ pub(crate) enum Language {
     Kotlin,
     Rust,
 }
-
 impl Language {
     pub(crate) fn versions(self) -> Vec<String> {
         match self {

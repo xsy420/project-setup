@@ -1,7 +1,6 @@
 use super::Appv2;
 use anyhow::Result;
 use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect};
-
 #[derive(Default)]
 pub(crate) struct InnerHandleKeyEventOutput {
     pub(crate) esc_handled: bool,
@@ -12,6 +11,7 @@ impl InnerHandleKeyEventOutput {
         self.exit = true;
         self
     }
+
     #[allow(dead_code)]
     pub(crate) fn with_esc_handled(mut self) -> Self {
         self.esc_handled = true;

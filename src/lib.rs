@@ -10,7 +10,6 @@ pub trait LoopableNumberedEnum {
     #[must_use]
     fn prev(&self) -> Self;
 }
-
 #[allow(dead_code)]
 #[derive(Debug, Clone, LoopableNumberedEnum, FromPrimitive, ToPrimitive, PartialEq)]
 #[numbered_enum(loop_within = 3)]
@@ -19,11 +18,9 @@ enum LoopableNumbered {
     Two,
     Three,
 }
-
 #[cfg(test)]
 mod project_setup_derive_test {
     use crate::LoopableNumbered;
-
     #[test]
     fn test_numbered_enum_extra_method() {
         assert_eq!(LoopableNumbered::One.next(), LoopableNumbered::Two);

@@ -1,16 +1,13 @@
-use std::{fs, io};
-
 use super::{Language, ProjectConfig, ProjectType};
 use anyhow::{Context, Error};
 use reqwest::blocking::Client;
+use std::{fs, io};
 use zip::ZipArchive;
-
 pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
     let project_path = config.path.join(&config.name);
     fs::create_dir_all(&project_path)?;
     config.vcs.init_vcs_repo(&config.name, &config.path)?;
     let mut main_file_to_edit = "";
-
     match config.project_type {
         ProjectType::SpringBoot => {
             let client = Client::new();
@@ -28,14 +25,11 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
                 .context("Failed to send request to Spring Boot starter")?
                 .bytes()
                 .context("Failed to read response bytes")?;
-
             // 直接在内存中解压 ZIP
             let mut archive =
                 ZipArchive::new(io::Cursor::new(bytes)).context("Failed to parse ZIP archive")?;
-
             // 确保目标目录存在
             fs::create_dir_all(&config.path).context("Failed to create project directory")?;
-
             // 解压所有文件到目标目录
             archive
                 .extract(&config.path)
@@ -65,7 +59,6 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
                     "main.cpp"
                 }
             );
-
             let main_c = "\
                 #include <stdio.h>\n\
                 \n\
@@ -73,7 +66,6 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
                 \tprintf(\"Hello, World!\");\n\
                 \treturn 0;\n\
                 }\n";
-
             let main_cpp = "\
                 #include <iostream>\n\
                 \n\
@@ -81,7 +73,6 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
                 \tstd::cout << \"Hello, World!\" << std::endl;\n\
                 \treturn 0;\n\
                 }\n";
-
             fs::write(project_path.join("CMakeLists.txt"), cmake_lists)?;
             if config.language == Language::C {
                 fs::write(project_path.join("main.c"), main_c)?;
@@ -99,6 +90,5 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
             );
         }
     }
-
     Ok(main_file_to_edit.to_string())
 }
