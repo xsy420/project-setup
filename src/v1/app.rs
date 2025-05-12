@@ -5,9 +5,9 @@ use crate::common::{
 };
 
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
     Terminal,
+    crossterm::event::{self, Event, KeyCode, KeyEventKind},
     prelude::*,
     widgets::{Block, List, ListItem, ListState, Paragraph},
 };

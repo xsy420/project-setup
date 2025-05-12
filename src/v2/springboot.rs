@@ -1,13 +1,13 @@
 use super::{Appv2, Focus, Inner, InnerHandleKeyEventOutput};
 use crate::common::{Editor, Vcs};
 use anyhow::{Context, Result};
-use crossterm::event::{KeyCode, KeyEvent};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup::LoopableNumberedEnum;
 use ratatui::style::Color;
 use ratatui::{
     Frame,
+    crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, BorderType, Borders, Paragraph},
 };

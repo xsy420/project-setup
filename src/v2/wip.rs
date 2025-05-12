@@ -1,6 +1,6 @@
 use super::{Appv2, Inner, InnerHandleKeyEventOutput};
-use crossterm::event::KeyEvent;
 use ratatui::{
+    crossterm::event::KeyEvent,
     layout::{Constraint, Direction, Layout},
     style::{Style, Stylize},
 };
