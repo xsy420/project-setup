@@ -16,7 +16,6 @@ use std::{env, fmt::Debug, fs, io, path::PathBuf};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 use zip::ZipArchive;
-
 #[derive(Debug, Clone, Copy, FromPrimitive, EnumIter)]
 enum SpringBootField {
     Name,
@@ -31,7 +30,6 @@ enum SpringBootField {
     Dependencies,
     Path,
 }
-
 impl SpringBootField {
     fn vaildate_string(self, value: &mut str) -> String {
         match self {
@@ -53,7 +51,6 @@ impl SpringBootField {
         }
     }
 }
-
 #[derive(Default, Display, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum)]
 #[numbered_enum(loop_within = 2)]
 #[allow(dead_code)]
@@ -79,7 +76,6 @@ pub(crate) struct SpringBootInner {
     focus_index: usize,
     error_messages: Vec<String>,
 }
-
 impl SpringBootInner {
     pub(crate) fn new() -> Self {
         Self {
@@ -99,6 +95,7 @@ impl SpringBootInner {
             error_messages: SpringBootField::iter().map(|_| String::new()).collect(),
         }
     }
+
     fn get_focus_field_mut(&mut self, field: SpringBootField) -> Result<&mut String, String> {
         match field {
             SpringBootField::Name => Ok(&mut self.name),
@@ -110,6 +107,7 @@ impl SpringBootInner {
             _ => Err(String::new()),
         }
     }
+
     fn get_field(&self, field: SpringBootField) -> &dyn Debug {
         match field {
             SpringBootField::Name => &self.name,
@@ -126,7 +124,6 @@ impl SpringBootInner {
         }
     }
 }
-
 impl Inner for SpringBootInner {
     fn render(&self, f: &mut Frame, app: &Appv2, area: Rect) {
         let labels = [
@@ -156,9 +153,9 @@ impl Inner for SpringBootInner {
         let split_input_error_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)]);
-        for i in (0..labels.len()).step_by(2) {
+        for i in (0 .. labels.len()).step_by(2) {
             let line_layout = split_line_layout.split(form_layout[i / 2]);
-            for side in 0..2 {
+            for side in 0 .. 2 {
                 let index = i + side;
                 if index == labels.len() {
                     break;
@@ -175,7 +172,6 @@ impl Inner for SpringBootInner {
                 );
                 let field_value = self.get_field(SpringBootField::from_usize(index).unwrap());
                 let field_string_value = format!("{field_value:?}").replace('"', "");
-
                 f.render_widget(
                     Paragraph::new(if field_string_value.is_empty() {
                         format!("Please input {}", labels[index])
@@ -209,10 +205,12 @@ impl Inner for SpringBootInner {
             }
         }
     }
+
     fn bottom_help_message(&self) -> String {
         "tab: focus next item | shift+tab: focus prev item | Enter: confirm to create project | "
             .to_string()
     }
+
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
         let field_len = SpringBootField::iter().count();
         let field = SpringBootField::from_usize(self.focus_index).unwrap();
@@ -259,6 +257,7 @@ impl Inner for SpringBootInner {
         }
         InnerHandleKeyEventOutput::default()
     }
+
     fn create_and_edit(&self) -> Result<()> {
         let project_path = self.path.join(&self.name);
         fs::create_dir_all(&project_path)?;
@@ -295,19 +294,15 @@ impl Inner for SpringBootInner {
             .context("Failed to send request to Spring Boot starter")?
             .bytes()
             .context("Failed to read response bytes")?;
-
         // 直接在内存中解压 ZIP
         let mut archive =
             ZipArchive::new(io::Cursor::new(bytes)).context("Failed to parse ZIP archive")?;
-
         // 确保目标目录存在
         fs::create_dir_all(&self.path).context("Failed to create project directory")?;
-
         // 解压所有文件到目标目录
         archive
             .extract(&self.path)
             .context("Failed to extract ZIP archive")?;
-
         self.editor.run(
             self.path.join(&self.name),
             format!(
@@ -315,7 +310,7 @@ impl Inner for SpringBootInner {
                 language,
                 self.group_id.replace('.', "/"),
                 self.artifact_id,
-                self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..],
+                self.artifact_id[0 .. 1].to_uppercase() + &self.artifact_id[1 ..],
                 extension
             ),
         )?;

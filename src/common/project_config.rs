@@ -1,7 +1,5 @@
-use std::{env, path::PathBuf};
-
 use super::{Editor, Language, ProjectType, Vcs};
-
+use std::{env, path::PathBuf};
 #[derive(Debug)]
 #[allow(dead_code)]
 pub(crate) struct ProjectConfig {
@@ -15,7 +13,6 @@ pub(crate) struct ProjectConfig {
     pub(crate) vcs: Vcs,
     pub(crate) editor: Editor,
 }
-
 impl Default for ProjectConfig {
     fn default() -> Self {
         Self {

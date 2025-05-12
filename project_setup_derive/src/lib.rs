@@ -1,13 +1,11 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
-
 #[proc_macro_derive(LoopableNumberedEnum, attributes(numbered_enum))]
 pub fn numbered_enum_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let mut loop_within: Option<usize> = None;
-
     for attr in &input.attrs {
         if attr.path().is_ident("numbered_enum") {
             let _ = attr.parse_nested_meta(|meta| {
@@ -20,7 +18,6 @@ pub fn numbered_enum_derive(input: TokenStream) -> TokenStream {
             });
         }
     }
-
     let expanded = quote! {
     impl #name {
         pub fn num(&self) -> usize {
