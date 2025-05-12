@@ -1,13 +1,8 @@
 use std::rc::Rc;
 
-use crate::create_project::create_project;
-use crate::direction::AppDirection;
-use crate::editor::Editor;
-use crate::focus_input::FocusInput;
-use crate::language::Language;
-use crate::project_config::ProjectConfig;
-use crate::project_type::ProjectType;
-use crate::vcs::Vcs;
+use crate::common::{
+    AppDirection, Editor, FocusInput, Language, ProjectConfig, ProjectType, Vcs, create_project,
+};
 
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};

@@ -1,5 +1,4 @@
-use crate::focus_input::FocusInput;
-use crate::project_type::ProjectType;
+use crate::common::{FocusInput, ProjectType};
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{

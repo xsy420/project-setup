@@ -1,18 +1,6 @@
-mod app;
-mod create_project;
-mod direction;
-mod editor;
-mod focus_input;
-mod language;
-mod project_config;
+mod common;
+mod v1;
 mod v2;
-// mod project_packaging;
-mod project_type;
-mod vcs;
-use std::io::{self};
-
-use app::ProjectSetupApp;
-
 use anyhow::Result;
 use clap::Parser;
 use crossterm::{
@@ -20,6 +8,8 @@ use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{Terminal, prelude::*};
+use std::io::{self};
+use v1::{ProjectSetupApp, run_app};
 
 /// A TUI to help you setup a project easily.
 #[derive(Parser)]
@@ -37,7 +27,7 @@ fn main() -> Result<()> {
 
     // 创建应用
     let mut app = ProjectSetupApp::new();
-    let mut res = app::run_app(&mut terminal, &mut app);
+    let mut res = run_app(&mut terminal, &mut app);
     if let Err(err) = res {
         println!("{err:?}");
     }
