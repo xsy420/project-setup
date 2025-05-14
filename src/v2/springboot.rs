@@ -160,7 +160,7 @@ impl Inner for SpringBootInner {
         // 表单布局 - 垂直排列输入框
         let form_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(6); 6])
+            .constraints([Constraint::Length(5); 6])
             .split(area);
         let split_line_layout = Layout::default()
             .direction(Direction::Horizontal)
@@ -170,7 +170,7 @@ impl Inner for SpringBootInner {
             .constraints([Constraint::Length(20), Constraint::Min(0)]);
         let split_tip_input_error_layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Max(1), Constraint::Max(4), Constraint::Max(1)]);
+            .constraints([Constraint::Max(1), Constraint::Max(3), Constraint::Max(1)]);
         for i in (0 .. labels.len()).step_by(2) {
             let line_layout = split_line_layout.split(form_layout[i / 2]);
             for side in 0 .. 2 {
