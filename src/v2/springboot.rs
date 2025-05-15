@@ -1,6 +1,8 @@
-use super::{Focus, Inner, InnerHandleKeyEventOutput};
+use super::{
+    Focus, Inner, InnerHandleKeyEventOutput, RadioOption, RadioOptionTrait, RadioOptionValue,
+};
 use crate::{
-    common::{AppDirection, Editor, Vcs},
+    common::{Editor, Vcs},
     features::{download_file, unzip},
 };
 use anyhow::Result;
@@ -55,57 +57,6 @@ impl SpringBootField {
             }
             _ => String::new(),
         }
-    }
-}
-trait RadioOptionValue: Display + Default + Copy + IntoEnumIterator + PartialEq {}
-#[derive(Clone)]
-struct RadioOption<V>
-where
-    V: RadioOptionValue,
-{
-    value: V,
-    id: usize,
-}
-impl<V: RadioOptionValue> Default for RadioOption<V> {
-    fn default() -> Self {
-        let value = V::default();
-        let mut id = 0;
-        for v in V::iter() {
-            if v == value {
-                break;
-            }
-            id += 1;
-        }
-        Self { value, id }
-    }
-}
-trait RadioOptionTrait {
-    fn next(&mut self);
-    fn prev(&mut self);
-    fn get_symbol(&self, curr: usize) -> String;
-    fn length(&self) -> usize;
-}
-impl<V: RadioOptionValue> RadioOptionTrait for RadioOption<V> {
-    fn next(&mut self) {
-        self.id = AppDirection::Next.get_counter(Some(self.id), self.length());
-        self.value = V::iter().collect::<Vec<V>>()[self.id];
-    }
-
-    fn prev(&mut self) {
-        self.id = AppDirection::Prev.get_counter(Some(self.id), self.length());
-        self.value = V::iter().collect::<Vec<V>>()[self.id];
-    }
-
-    fn get_symbol(&self, curr: usize) -> String {
-        format!(
-            "{} {}",
-            if self.id == curr { "◉" } else { "○" },
-            V::iter().collect::<Vec<V>>()[curr]
-        )
-    }
-
-    fn length(&self) -> usize {
-        V::iter().count()
     }
 }
 #[derive(
@@ -174,7 +125,7 @@ pub(crate) struct SpringBootInner {
     java_version: RadioOption<JavaVersion>,
     kotlin_version: String,
     editor: Editor,
-    vcs: Vcs,
+    vcs: RadioOption<Vcs>,
     dependencies: Vec<String>,
     path: PathBuf,
     focus: Focus,
@@ -194,7 +145,7 @@ impl SpringBootInner {
             java_version: RadioOption::default(),
             kotlin_version: String::new(),
             editor: Editor::default(),
-            vcs: Vcs::default(),
+            vcs: RadioOption::default(),
             dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
             focus: Focus::new(),
@@ -208,7 +159,7 @@ impl SpringBootInner {
                 "Use  /  to select language",
                 "Use  /  to select java_version",
                 "Use j/k to scroll editor",
-                "Use j/k to scroll Vcs tool",
+                "Use  /  to select vcs tool",
                 "Please input the dependencies of this project",
                 "Please input the path of this project",
             ]
@@ -239,7 +190,7 @@ impl SpringBootInner {
             SpringBootField::Language => &self.language.value,
             SpringBootField::JavaVersion => &self.java_version.value,
             SpringBootField::Editor => &self.editor,
-            SpringBootField::Vcs => &self.vcs,
+            SpringBootField::Vcs => &self.vcs.value,
             SpringBootField::Dependencies => &self.dependencies,
             SpringBootField::Path => &self.path,
         }
@@ -250,6 +201,7 @@ impl SpringBootInner {
             SpringBootField::Generator => Some(&mut self.generator),
             SpringBootField::Language => Some(&mut self.language),
             SpringBootField::JavaVersion => Some(&mut self.java_version),
+            SpringBootField::Vcs => Some(&mut self.vcs),
             _ => None,
         }
     }
@@ -376,19 +328,15 @@ impl Inner for SpringBootInner {
                     x.push(c);
                     self.error_messages[self.focus_index] = field.vaildate_string(x);
                 }
-                Err(_) => match field {
-                    SpringBootField::Editor => match c {
-                        'j' => self.editor = self.editor.next(),
-                        'k' => self.editor = self.editor.prev(),
-                        _ => {}
-                    },
-                    SpringBootField::Vcs => match c {
-                        'j' => self.vcs = self.vcs.next(),
-                        'k' => self.vcs = self.vcs.prev(),
-                        _ => {}
-                    },
-                    _ => {}
-                },
+                Err(_) => {
+                    if let SpringBootField::Editor = field {
+                        match c {
+                            'j' => self.editor = self.editor.next(),
+                            'k' => self.editor = self.editor.prev(),
+                            _ => {}
+                        }
+                    }
+                }
             },
             KeyCode::Backspace => {
                 self.get_focus_field_mut(field).ok().unwrap().pop();
@@ -418,7 +366,7 @@ impl Inner for SpringBootInner {
     fn create_and_edit(&self) -> Result<()> {
         let project_path = self.path.join(&self.name);
         fs::create_dir_all(&project_path)?;
-        self.vcs.init_vcs_repo(&self.name, &self.path)?;
+        self.vcs.value.init_vcs_repo(&self.name, &self.path)?;
         let params = [
             ("groupId", self.group_id.clone()),
             ("artifactId", self.artifact_id.clone()),

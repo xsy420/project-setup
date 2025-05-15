@@ -291,7 +291,7 @@ fn focus_list_item_ui(
             FocusInput::LanguageVersion => Some(app.config.language.versions()),
             FocusInput::Vcs => Some(
                 Vcs::iter()
-                    .filter(Vcs::is_available)
+                    .filter(|x| x.is_available())
                     .map(|x| x.to_string())
                     .collect(),
             ),
