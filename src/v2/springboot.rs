@@ -1,6 +1,4 @@
-use super::{
-    Focus, Inner, InnerHandleKeyEventOutput, RadioOption, RadioOptionTrait, RadioOptionValue,
-};
+use super::{Inner, InnerHandleKeyEventOutput, RadioOption, RadioOptionTrait, RadioOptionValue};
 use crate::{
     common::{Editor, Vcs},
     features::{download_file, unzip},
@@ -114,7 +112,6 @@ impl Display for JavaVersion {
     }
 }
 impl RadioOptionValue for JavaVersion {}
-#[allow(dead_code)]
 pub(crate) struct SpringBootInner {
     name: String,
     generator: RadioOption<Generator>,
@@ -123,12 +120,10 @@ pub(crate) struct SpringBootInner {
     boot_version: String,
     language: RadioOption<Language>,
     java_version: RadioOption<JavaVersion>,
-    kotlin_version: String,
     editor: Editor,
     vcs: RadioOption<Vcs>,
     dependencies: Vec<String>,
     path: PathBuf,
-    focus: Focus,
     focus_index: usize,
     tip_messages: Vec<String>,
     error_messages: Vec<String>,
@@ -143,12 +138,10 @@ impl SpringBootInner {
             boot_version: "3.3.0".to_string(),
             language: RadioOption::default(),
             java_version: RadioOption::default(),
-            kotlin_version: String::new(),
             editor: Editor::default(),
             vcs: RadioOption::default(),
             dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
-            focus: Focus::new(),
             focus_index: 0,
             tip_messages: [
                 "Please input the name of this project",
