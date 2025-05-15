@@ -30,7 +30,7 @@ impl Appv2 {
         }
     }
 }
-fn ui(frame: &mut Frame, app: &Appv2) {
+fn ui(frame: &mut Frame, app: &mut Appv2) {
     // 主布局 - 水平分割为左右两部分
     let main_layout = Layout::default()
         .direction(Direction::Horizontal)
@@ -69,8 +69,12 @@ fn ui(frame: &mut Frame, app: &Appv2) {
             Color::Red
         }));
     frame.render_widget(&right_block, main_layout[1]);
-    let inner = app.inners[app.selected.num()].as_ref();
-    inner.render(frame, app, right_block.inner(main_layout[1]));
+    let inner = app.inners[app.selected.num()].as_mut();
+    inner.render(
+        frame,
+        !app.focus_left_side,
+        right_block.inner(main_layout[1]),
+    );
     // 底部帮助栏
     let help_bar = Paragraph::new(if app.focus_left_side {
         "j/k: move | Enter: choose | q: quit".to_string()

@@ -1,4 +1,3 @@
-use super::Appv2;
 use anyhow::Result;
 use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect};
 #[derive(Default)]
@@ -19,7 +18,7 @@ impl InnerHandleKeyEventOutput {
     }
 }
 pub(crate) trait Inner {
-    fn render(&self, f: &mut Frame, app: &Appv2, area: Rect);
+    fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect);
     fn bottom_help_message(&self) -> String;
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput;
     fn create_and_edit(&self) -> Result<()>;

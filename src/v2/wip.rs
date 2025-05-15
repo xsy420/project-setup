@@ -1,4 +1,4 @@
-use super::{Appv2, Inner, InnerHandleKeyEventOutput};
+use super::{Inner, InnerHandleKeyEventOutput};
 use ratatui::{
     crossterm::event::KeyEvent,
     layout::{Constraint, Direction, Layout},
@@ -7,7 +7,7 @@ use ratatui::{
 use tui_big_text::{BigText, PixelSize};
 pub(crate) struct WipInner {}
 impl Inner for WipInner {
-    fn render(&self, f: &mut ratatui::Frame, _app: &Appv2, area: ratatui::prelude::Rect) {
+    fn render(&mut self, f: &mut ratatui::Frame, _: bool, area: ratatui::prelude::Rect) {
         f.render_widget(
             BigText::builder()
                 .pixel_size(PixelSize::Full)

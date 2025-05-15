@@ -1,4 +1,4 @@
-use super::{Appv2, Focus, Inner, InnerHandleKeyEventOutput};
+use super::{Focus, Inner, InnerHandleKeyEventOutput};
 use crate::{
     common::{AppDirection, Editor, Vcs},
     features::{download_file, unzip},
@@ -29,6 +29,7 @@ enum SpringBootField {
     GroupId,
     ArtifactId,
     BootVersion,
+    Language,
     JavaVersion,
     KotlinVersion,
     Editor,
@@ -59,7 +60,6 @@ impl SpringBootField {
 }
 trait RadioOptionValue: Display + Default + Copy + IntoEnumIterator {}
 #[derive(Clone, Default)]
-#[allow(dead_code)]
 struct RadioOption<V>
 where
     V: RadioOptionValue,
@@ -67,19 +67,33 @@ where
     value: V,
     id: usize,
 }
-impl<V: RadioOptionValue> RadioOption<V> {
+trait RadioOptionTrait {
+    fn next(&mut self);
+    fn prev(&mut self);
+    fn get_symbol(&self, curr: usize) -> String;
+    fn length(&self) -> usize;
+}
+impl<V: RadioOptionValue> RadioOptionTrait for RadioOption<V> {
     fn next(&mut self) {
-        self.id = AppDirection::Next.get_counter(Some(self.id), V::iter().count());
+        self.id = AppDirection::Next.get_counter(Some(self.id), self.length());
         self.value = V::iter().collect::<Vec<V>>()[self.id];
     }
 
     fn prev(&mut self) {
-        self.id = AppDirection::Prev.get_counter(Some(self.id), V::iter().count());
+        self.id = AppDirection::Prev.get_counter(Some(self.id), self.length());
         self.value = V::iter().collect::<Vec<V>>()[self.id];
     }
 
     fn get_symbol(&self, curr: usize) -> String {
-        if self.id == curr { "◉" } else { "○" }.to_string()
+        format!(
+            "{} {}",
+            if self.id == curr { "◉" } else { "○" },
+            V::iter().collect::<Vec<V>>()[curr]
+        )
+    }
+
+    fn length(&self) -> usize {
+        V::iter().count()
     }
 }
 #[derive(
@@ -92,6 +106,13 @@ enum Generator {
     Gradle,
 }
 impl RadioOptionValue for Generator {}
+#[derive(Clone, Copy, Default, Display, Debug, EnumIter)]
+enum Language {
+    #[default]
+    Java,
+    Kotlin,
+}
+impl RadioOptionValue for Language {}
 #[allow(dead_code)]
 pub(crate) struct SpringBootInner {
     name: String,
@@ -99,6 +120,7 @@ pub(crate) struct SpringBootInner {
     group_id: String,
     artifact_id: String,
     boot_version: String,
+    language: RadioOption<Language>,
     java_version: String,
     kotlin_version: String,
     editor: Editor,
@@ -118,6 +140,7 @@ impl SpringBootInner {
             group_id: "com.example".to_string(),
             artifact_id: "demo".to_string(),
             boot_version: "3.3.0".to_string(),
+            language: RadioOption::default(),
             java_version: "17".to_string(),
             kotlin_version: String::new(),
             editor: Editor::default(),
@@ -132,6 +155,7 @@ impl SpringBootInner {
                 "Please input the group_id of this project",
                 "Please input the artifact_id of this project",
                 "Please input the boot_version of this project",
+                "Use  /  to select language",
                 "Please input the java_version of this project",
                 "Please input the kotlin_version of this project",
                 "Use j/k to scroll editor",
@@ -165,6 +189,7 @@ impl SpringBootInner {
             SpringBootField::GroupId => &self.group_id,
             SpringBootField::ArtifactId => &self.artifact_id,
             SpringBootField::BootVersion => &self.boot_version,
+            SpringBootField::Language => &self.language.value,
             SpringBootField::JavaVersion => &self.java_version,
             SpringBootField::KotlinVersion => &self.kotlin_version,
             SpringBootField::Editor => &self.editor,
@@ -173,22 +198,35 @@ impl SpringBootInner {
             SpringBootField::Path => &self.path,
         }
     }
-}
-impl Inner for SpringBootInner {
-    fn render(&self, f: &mut Frame, app: &Appv2, area: Rect) {
-        let labels = [
+
+    fn get_radio(&mut self, field: SpringBootField) -> Option<&mut dyn RadioOptionTrait> {
+        match field {
+            SpringBootField::Generator => Some(&mut self.generator),
+            SpringBootField::Language => Some(&mut self.language),
+            _ => None,
+        }
+    }
+
+    fn labels() -> &'static [&'static str] {
+        &[
             "name",
             "generator",
             "group_id",
             "artifact_id",
             "boot_version",
+            "language",
             "java_version",
             "kotlin_version",
             "editor",
             "vcs",
             "dependencies",
             "path",
-        ];
+        ]
+    }
+}
+impl Inner for SpringBootInner {
+    fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect) {
+        let labels = Self::labels();
         // 表单布局 - 垂直排列输入框
         let form_layout = Layout::default()
             .direction(Direction::Vertical)
@@ -222,13 +260,13 @@ impl Inner for SpringBootInner {
                 );
                 let focus_block = Block::new()
                     .borders(Borders::ALL)
-                    .border_style(if index == self.focus_index && !app.focus_left_side {
+                    .border_style(if index == self.focus_index && focus_right_side {
                         Color::Red
                     } else {
                         Color::default()
                     })
                     .border_type(BorderType::Thick);
-                if !app.focus_left_side && index == self.focus_index {
+                if focus_right_side && index == self.focus_index {
                     f.render_widget(
                         Paragraph::new(self.tip_messages[index].clone())
                             .style(Color::Blue)
@@ -236,15 +274,15 @@ impl Inner for SpringBootInner {
                         split_tip_input_error_layout.split(label_input_area[1])[0],
                     );
                 }
-                if index == 1 {
+                let field = SpringBootField::from_usize(index).unwrap();
+                if let Some(r) = self.get_radio(field) {
                     f.render_widget(
-                        Paragraph::new(format!(
-                            "{} {}    {} {}",
-                            self.generator.get_symbol(0),
-                            Generator::Maven,
-                            self.generator.get_symbol(1),
-                            Generator::Gradle
-                        ))
+                        Paragraph::new(
+                            (0 .. r.length())
+                                .map(|curr| r.get_symbol(curr))
+                                .collect::<Vec<String>>()
+                                .join("    "),
+                        )
                         .style(Color::LightRed)
                         .centered()
                         .block(focus_block),
@@ -252,7 +290,7 @@ impl Inner for SpringBootInner {
                     );
                     continue;
                 }
-                let field_value = self.get_field(SpringBootField::from_usize(index).unwrap());
+                let field_value = self.get_field(field);
                 let field_string_value = format!("{field_value:?}").replace('"', "");
                 f.render_widget(
                     Paragraph::new(if field_string_value.is_empty() {
@@ -293,18 +331,18 @@ impl Inner for SpringBootInner {
                     x.push(c);
                     self.error_messages[self.focus_index] = field.vaildate_string(x);
                 }
-                Err(_) => match self.focus_index {
-                    7 => match c {
+                Err(_) => match field {
+                    SpringBootField::Editor => match c {
                         'j' => self.editor = self.editor.next(),
                         'k' => self.editor = self.editor.prev(),
                         _ => {}
                     },
-                    8 => match c {
+                    SpringBootField::Vcs => match c {
                         'j' => self.vcs = self.vcs.next(),
                         'k' => self.vcs = self.vcs.prev(),
                         _ => {}
                     },
-                    _ => unreachable!(),
+                    _ => {}
                 },
             },
             KeyCode::Backspace => {
@@ -322,14 +360,10 @@ impl Inner for SpringBootInner {
                 self.focus_index = (self.focus_index + field_len - 1) % field_len;
             }
             KeyCode::Left => {
-                if self.focus_index == 1 {
-                    self.generator.prev();
-                }
+                self.get_radio(field).map(RadioOptionTrait::prev);
             }
             KeyCode::Right => {
-                if self.focus_index == 1 {
-                    self.generator.next();
-                }
+                self.get_radio(field).map(RadioOptionTrait::next);
             }
             _ => {}
         }
