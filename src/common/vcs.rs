@@ -25,17 +25,6 @@ pub(crate) enum Vcs {
     Svn,
 }
 impl Vcs {
-    pub(crate) fn is_available(self) -> bool {
-        match self {
-            Self::NotNeed => true,
-            Self::Git | Self::Svn => Command::new(self)
-                .arg("--version")
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false),
-        }
-    }
-
     pub(crate) fn init_vcs_repo(self, name: &String, path: &PathBuf) -> Result<(), Error> {
         match self {
             Vcs::Git => Command::new("git")
@@ -65,4 +54,15 @@ impl AsRef<OsStr> for Vcs {
         })
     }
 }
-impl RadioOptionValue for Vcs {}
+impl RadioOptionValue for Vcs {
+    fn selectable(&self) -> bool {
+        match self {
+            Self::NotNeed => true,
+            Self::Git | Self::Svn => Command::new(self)
+                .arg("--version")
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false),
+        }
+    }
+}

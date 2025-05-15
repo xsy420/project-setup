@@ -1,5 +1,8 @@
-use crate::common::{
-    AppDirection, Editor, FocusInput, Language, ProjectConfig, ProjectType, Vcs, create_project,
+use crate::{
+    common::{
+        AppDirection, Editor, FocusInput, Language, ProjectConfig, ProjectType, Vcs, create_project,
+    },
+    v2::RadioOptionValue,
 };
 use anyhow::Result;
 use ratatui::{
@@ -291,7 +294,7 @@ fn focus_list_item_ui(
             FocusInput::LanguageVersion => Some(app.config.language.versions()),
             FocusInput::Vcs => Some(
                 Vcs::iter()
-                    .filter(|x| x.is_available())
+                    .filter(RadioOptionValue::selectable)
                     .map(|x| x.to_string())
                     .collect(),
             ),
