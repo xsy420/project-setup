@@ -109,6 +109,7 @@ pub(crate) fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut Appv2) -
                 }
                 if res.exit {
                     inner.create_and_edit()?;
+                    return Ok(());
                 }
             }
         }
