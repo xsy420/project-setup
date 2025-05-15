@@ -132,7 +132,7 @@ pub(crate) struct SpringBootInner {
     boot_version: String,
     language: RadioOption<Language>,
     java_version: RadioOption<JavaVersion>,
-    editor: Editor,
+    editor: RadioOption<Editor>,
     vcs: RadioOption<Vcs>,
     dependencies: Vec<String>,
     path: PathBuf,
@@ -150,7 +150,7 @@ impl SpringBootInner {
             boot_version: "3.3.0".to_string(),
             language: RadioOption::default(),
             java_version: RadioOption::default(),
-            editor: Editor::default(),
+            editor: RadioOption::default(),
             vcs: RadioOption::default(),
             dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
@@ -163,7 +163,7 @@ impl SpringBootInner {
                 "Please input the boot_version of this project",
                 "Use  /  to select language",
                 "Use  /  to select java_version",
-                "Use j/k to scroll editor",
+                "Use  /  to select editor",
                 "Use  /  to select vcs tool",
                 "Please input the dependencies of this project",
                 "Please input the path of this project",
@@ -194,7 +194,7 @@ impl SpringBootInner {
             SpringBootField::BootVersion => &self.boot_version,
             SpringBootField::Language => &self.language.value,
             SpringBootField::JavaVersion => &self.java_version.value,
-            SpringBootField::Editor => &self.editor,
+            SpringBootField::Editor => &self.editor.value,
             SpringBootField::Vcs => &self.vcs.value,
             SpringBootField::Dependencies => &self.dependencies,
             SpringBootField::Path => &self.path,
@@ -206,6 +206,7 @@ impl SpringBootInner {
             SpringBootField::Generator => Some(&mut self.generator),
             SpringBootField::Language => Some(&mut self.language),
             SpringBootField::JavaVersion => Some(&mut self.java_version),
+            SpringBootField::Editor => Some(&mut self.editor),
             SpringBootField::Vcs => Some(&mut self.vcs),
             _ => None,
         }
@@ -328,21 +329,12 @@ impl Inner for SpringBootInner {
         let field_len = SpringBootField::iter().count();
         let field = SpringBootField::from_usize(self.focus_index).unwrap();
         match key.code {
-            KeyCode::Char(c) => match self.get_focus_field_mut(field) {
-                Ok(x) => {
+            KeyCode::Char(c) => {
+                if let Ok(x) = self.get_focus_field_mut(field) {
                     x.push(c);
                     self.error_messages[self.focus_index] = field.vaildate_string(x);
                 }
-                Err(_) => {
-                    if let SpringBootField::Editor = field {
-                        match c {
-                            'j' => self.editor = self.editor.next(),
-                            'k' => self.editor = self.editor.prev(),
-                            _ => {}
-                        }
-                    }
-                }
-            },
+            }
             KeyCode::Backspace => {
                 self.get_focus_field_mut(field).ok().unwrap().pop();
                 self.error_messages[self.focus_index] =
@@ -397,7 +389,7 @@ impl Inner for SpringBootInner {
         )?;
         unzip(&temp_zip_file, &self.path)?;
         fs::remove_file(&temp_zip_file)?;
-        self.editor.run(
+        self.editor.value.run(
             self.path.join(&self.name),
             format!(
                 "src/main/{}/{}/{}/{}Application.{}",
