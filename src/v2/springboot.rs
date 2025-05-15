@@ -1,6 +1,6 @@
 use super::{Appv2, Focus, Inner, InnerHandleKeyEventOutput};
 use crate::{
-    common::{Editor, Vcs},
+    common::{AppDirection, Editor, Vcs},
     features::{download_file, unzip},
 };
 use anyhow::Result;
@@ -14,7 +14,12 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, BorderType, Borders, Paragraph},
 };
-use std::{env, fmt::Debug, fs, path::PathBuf};
+use std::{
+    env,
+    fmt::{Debug, Display},
+    fs,
+    path::PathBuf,
+};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 #[derive(Debug, Clone, Copy, FromPrimitive, EnumIter)]
@@ -52,18 +57,45 @@ impl SpringBootField {
         }
     }
 }
-#[derive(Default, Display, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum)]
-#[numbered_enum(loop_within = 2)]
+trait RadioOptionValue: Display + Default + Copy + IntoEnumIterator {}
+#[derive(Clone, Default)]
 #[allow(dead_code)]
+struct RadioOption<V>
+where
+    V: RadioOptionValue,
+{
+    value: V,
+    id: usize,
+}
+impl<V: RadioOptionValue> RadioOption<V> {
+    fn next(&mut self) {
+        self.id = AppDirection::Next.get_counter(Some(self.id), V::iter().count());
+        self.value = V::iter().collect::<Vec<V>>()[self.id];
+    }
+
+    fn prev(&mut self) {
+        self.id = AppDirection::Prev.get_counter(Some(self.id), V::iter().count());
+        self.value = V::iter().collect::<Vec<V>>()[self.id];
+    }
+
+    fn get_symbol(&self, curr: usize) -> String {
+        if self.id == curr { "◉" } else { "○" }.to_string()
+    }
+}
+#[derive(
+    Clone, Copy, Default, Display, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum, EnumIter,
+)]
+#[numbered_enum(loop_within = 2)]
 enum Generator {
     #[default]
     Maven,
     Gradle,
 }
+impl RadioOptionValue for Generator {}
 #[allow(dead_code)]
 pub(crate) struct SpringBootInner {
     name: String,
-    generator: Generator,
+    generator: RadioOption<Generator>,
     group_id: String,
     artifact_id: String,
     boot_version: String,
@@ -82,7 +114,7 @@ impl SpringBootInner {
     pub(crate) fn new() -> Self {
         Self {
             name: "demo".to_string(),
-            generator: Generator::default(),
+            generator: RadioOption::default(),
             group_id: "com.example".to_string(),
             artifact_id: "demo".to_string(),
             boot_version: "3.3.0".to_string(),
@@ -96,7 +128,7 @@ impl SpringBootInner {
             focus_index: 0,
             tip_messages: [
                 "Please input the name of this project",
-                "Use j/k to scroll between Maven or Gradle",
+                "Use  /  to select generator",
                 "Please input the group_id of this project",
                 "Please input the artifact_id of this project",
                 "Please input the boot_version of this project",
@@ -129,7 +161,7 @@ impl SpringBootInner {
     fn get_field(&self, field: SpringBootField) -> &dyn Debug {
         match field {
             SpringBootField::Name => &self.name,
-            SpringBootField::Generator => &self.generator,
+            SpringBootField::Generator => &self.generator.value,
             SpringBootField::GroupId => &self.group_id,
             SpringBootField::ArtifactId => &self.artifact_id,
             SpringBootField::BootVersion => &self.boot_version,
@@ -188,6 +220,14 @@ impl Inner for SpringBootInner {
                     ),
                     split_tip_input_error_layout.split(label_input_area[0])[1],
                 );
+                let focus_block = Block::new()
+                    .borders(Borders::ALL)
+                    .border_style(if index == self.focus_index && !app.focus_left_side {
+                        Color::Red
+                    } else {
+                        Color::default()
+                    })
+                    .border_type(BorderType::Thick);
                 if !app.focus_left_side && index == self.focus_index {
                     f.render_widget(
                         Paragraph::new(self.tip_messages[index].clone())
@@ -195,6 +235,22 @@ impl Inner for SpringBootInner {
                             .centered(),
                         split_tip_input_error_layout.split(label_input_area[1])[0],
                     );
+                }
+                if index == 1 {
+                    f.render_widget(
+                        Paragraph::new(format!(
+                            "{} {}    {} {}",
+                            self.generator.get_symbol(0),
+                            Generator::Maven,
+                            self.generator.get_symbol(1),
+                            Generator::Gradle
+                        ))
+                        .style(Color::LightRed)
+                        .centered()
+                        .block(focus_block),
+                        split_tip_input_error_layout.split(label_input_area[1])[1],
+                    );
+                    continue;
                 }
                 let field_value = self.get_field(SpringBootField::from_usize(index).unwrap());
                 let field_string_value = format!("{field_value:?}").replace('"', "");
@@ -210,16 +266,7 @@ impl Inner for SpringBootInner {
                     } else {
                         Color::default()
                     })
-                    .block(
-                        Block::new()
-                            .borders(Borders::ALL)
-                            .border_style(if index == self.focus_index && !app.focus_left_side {
-                                Color::Red
-                            } else {
-                                Color::default()
-                            })
-                            .border_type(BorderType::Thick),
-                    ),
+                    .block(focus_block),
                     split_tip_input_error_layout.split(label_input_area[1])[1],
                 );
                 if !self.error_messages[index].is_empty() {
@@ -247,11 +294,6 @@ impl Inner for SpringBootInner {
                     self.error_messages[self.focus_index] = field.vaildate_string(x);
                 }
                 Err(_) => match self.focus_index {
-                    1 => match c {
-                        'j' => self.generator = self.generator.next(),
-                        'k' => self.generator = self.generator.prev(),
-                        _ => {}
-                    },
                     7 => match c {
                         'j' => self.editor = self.editor.next(),
                         'k' => self.editor = self.editor.prev(),
@@ -279,6 +321,16 @@ impl Inner for SpringBootInner {
             KeyCode::BackTab => {
                 self.focus_index = (self.focus_index + field_len - 1) % field_len;
             }
+            KeyCode::Left => {
+                if self.focus_index == 1 {
+                    self.generator.prev();
+                }
+            }
+            KeyCode::Right => {
+                if self.focus_index == 1 {
+                    self.generator.next();
+                }
+            }
             _ => {}
         }
         InnerHandleKeyEventOutput::default()
@@ -303,7 +355,10 @@ impl Inner for SpringBootInner {
             ("artifactId", self.artifact_id.as_str()),
             (
                 "type",
-                &format!("{}-project", self.generator.to_string().to_lowercase()),
+                &format!(
+                    "{}-project",
+                    self.generator.value.to_string().to_lowercase()
+                ),
             ),
             ("name", self.name.as_str()),
             ("language", language),
