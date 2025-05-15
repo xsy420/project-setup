@@ -75,7 +75,11 @@ enum Generator {
     Maven,
     Gradle,
 }
-impl RadioOptionValue for Generator {}
+impl RadioOptionValue for Generator {
+    fn selectable(&self) -> bool {
+        true
+    }
+}
 #[derive(Clone, Copy, Default, Display, Debug, EnumIter, PartialEq)]
 enum Language {
     #[default]
@@ -91,7 +95,11 @@ impl Language {
         .to_string()
     }
 }
-impl RadioOptionValue for Language {}
+impl RadioOptionValue for Language {
+    fn selectable(&self) -> bool {
+        true
+    }
+}
 #[derive(Clone, Copy, Default, Debug, EnumIter, PartialEq)]
 enum JavaVersion {
     TwentyThree,
@@ -111,7 +119,11 @@ impl Display for JavaVersion {
         .finish()
     }
 }
-impl RadioOptionValue for JavaVersion {}
+impl RadioOptionValue for JavaVersion {
+    fn selectable(&self) -> bool {
+        true
+    }
+}
 pub(crate) struct SpringBootInner {
     name: String,
     generator: RadioOption<Generator>,
