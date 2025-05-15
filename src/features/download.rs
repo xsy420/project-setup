@@ -7,7 +7,7 @@ use std::process::Command;
 #[cfg(not(feature = "reqwest"))]
 pub(crate) fn download_file(
     url: &str,
-    params: &[(&str, &str)],
+    params: &[(&str, String)],
     output: &PathBuf,
 ) -> Result<(), Error> {
     // 构建表单参数字符串（格式：key1=value1&key2=value2）
@@ -49,7 +49,7 @@ pub(crate) fn download_file(
 #[cfg(feature = "reqwest")]
 pub(crate) fn download_file(
     url: &str,
-    params: &[(&str, &str)],
+    params: &[(&str, String)],
     output: &PathBuf,
 ) -> Result<(), Error> {
     let response = Client::new().post(url).form(&params).send()?;
