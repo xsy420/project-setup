@@ -1,11 +1,9 @@
 mod appv2;
-mod focus;
 mod inner;
 mod radio_option;
 mod springboot;
 mod wip;
 pub(crate) use appv2::{Appv2, run_app};
-use focus::Focus;
 use inner::{Inner, InnerHandleKeyEventOutput};
 pub(crate) use radio_option::RadioOptionValue;
 use radio_option::{RadioOption, RadioOptionTrait};
