@@ -10,11 +10,11 @@ pub(crate) fn create_project(config: &ProjectConfig) -> Result<String, Error> {
     match config.project_type {
         ProjectType::SpringBoot => {
             let params = [
-                ("type", "maven-project"),
-                ("language", &config.language.to_string().to_lowercase()),
-                ("javaVersion", &config.language_version),
-                ("bootVersion", &config.project_version),
-                ("baseDir", &config.name),
+                ("type", "maven-project".to_string()),
+                ("language", config.language.to_string().to_lowercase()),
+                ("javaVersion", config.language_version.clone()),
+                ("bootVersion", config.project_version.clone()),
+                ("baseDir", config.name.clone()),
             ];
             let temp_zip_file = env::temp_dir().join("starter.zip");
             download_file(

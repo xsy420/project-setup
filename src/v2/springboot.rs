@@ -31,7 +31,6 @@ enum SpringBootField {
     BootVersion,
     Language,
     JavaVersion,
-    KotlinVersion,
     Editor,
     Vcs,
     Dependencies,
@@ -58,14 +57,27 @@ impl SpringBootField {
         }
     }
 }
-trait RadioOptionValue: Display + Default + Copy + IntoEnumIterator {}
-#[derive(Clone, Default)]
+trait RadioOptionValue: Display + Default + Copy + IntoEnumIterator + PartialEq {}
+#[derive(Clone)]
 struct RadioOption<V>
 where
     V: RadioOptionValue,
 {
     value: V,
     id: usize,
+}
+impl<V: RadioOptionValue> Default for RadioOption<V> {
+    fn default() -> Self {
+        let value = V::default();
+        let mut id = 0;
+        for v in V::iter() {
+            if v == value {
+                break;
+            }
+            id += 1;
+        }
+        Self { value, id }
+    }
 }
 trait RadioOptionTrait {
     fn next(&mut self);
@@ -97,7 +109,16 @@ impl<V: RadioOptionValue> RadioOptionTrait for RadioOption<V> {
     }
 }
 #[derive(
-    Clone, Copy, Default, Display, Debug, ToPrimitive, FromPrimitive, LoopableNumberedEnum, EnumIter,
+    Clone,
+    Copy,
+    Default,
+    Display,
+    Debug,
+    ToPrimitive,
+    FromPrimitive,
+    LoopableNumberedEnum,
+    EnumIter,
+    PartialEq,
 )]
 #[numbered_enum(loop_within = 2)]
 enum Generator {
@@ -106,13 +127,42 @@ enum Generator {
     Gradle,
 }
 impl RadioOptionValue for Generator {}
-#[derive(Clone, Copy, Default, Display, Debug, EnumIter)]
+#[derive(Clone, Copy, Default, Display, Debug, EnumIter, PartialEq)]
 enum Language {
     #[default]
     Java,
     Kotlin,
 }
+impl Language {
+    fn extension(self) -> String {
+        match self {
+            Self::Java => "java",
+            Self::Kotlin => "kt",
+        }
+        .to_string()
+    }
+}
 impl RadioOptionValue for Language {}
+#[derive(Clone, Copy, Default, Debug, EnumIter, PartialEq)]
+enum JavaVersion {
+    TwentyThree,
+    TwentyOne,
+    #[default]
+    Seventeen,
+    Eight,
+}
+impl Display for JavaVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct(match self {
+            Self::TwentyThree => "23",
+            Self::TwentyOne => "21",
+            Self::Seventeen => "17",
+            Self::Eight => "8",
+        })
+        .finish()
+    }
+}
+impl RadioOptionValue for JavaVersion {}
 #[allow(dead_code)]
 pub(crate) struct SpringBootInner {
     name: String,
@@ -121,7 +171,7 @@ pub(crate) struct SpringBootInner {
     artifact_id: String,
     boot_version: String,
     language: RadioOption<Language>,
-    java_version: String,
+    java_version: RadioOption<JavaVersion>,
     kotlin_version: String,
     editor: Editor,
     vcs: Vcs,
@@ -141,7 +191,7 @@ impl SpringBootInner {
             artifact_id: "demo".to_string(),
             boot_version: "3.3.0".to_string(),
             language: RadioOption::default(),
-            java_version: "17".to_string(),
+            java_version: RadioOption::default(),
             kotlin_version: String::new(),
             editor: Editor::default(),
             vcs: Vcs::default(),
@@ -176,8 +226,6 @@ impl SpringBootInner {
             SpringBootField::GroupId => Ok(&mut self.group_id),
             SpringBootField::ArtifactId => Ok(&mut self.artifact_id),
             SpringBootField::BootVersion => Ok(&mut self.boot_version),
-            SpringBootField::JavaVersion => Ok(&mut self.java_version),
-            SpringBootField::KotlinVersion => Ok(&mut self.kotlin_version),
             _ => Err(String::new()),
         }
     }
@@ -190,8 +238,7 @@ impl SpringBootInner {
             SpringBootField::ArtifactId => &self.artifact_id,
             SpringBootField::BootVersion => &self.boot_version,
             SpringBootField::Language => &self.language.value,
-            SpringBootField::JavaVersion => &self.java_version,
-            SpringBootField::KotlinVersion => &self.kotlin_version,
+            SpringBootField::JavaVersion => &self.java_version.value,
             SpringBootField::Editor => &self.editor,
             SpringBootField::Vcs => &self.vcs,
             SpringBootField::Dependencies => &self.dependencies,
@@ -203,6 +250,7 @@ impl SpringBootInner {
         match field {
             SpringBootField::Generator => Some(&mut self.generator),
             SpringBootField::Language => Some(&mut self.language),
+            SpringBootField::JavaVersion => Some(&mut self.java_version),
             _ => None,
         }
     }
@@ -216,7 +264,6 @@ impl SpringBootInner {
             "boot_version",
             "language",
             "java_version",
-            "kotlin_version",
             "editor",
             "vcs",
             "dependencies",
@@ -283,7 +330,6 @@ impl Inner for SpringBootInner {
                                 .collect::<Vec<String>>()
                                 .join("    "),
                         )
-                        .style(Color::LightRed)
                         .centered()
                         .block(focus_block),
                         split_tip_input_error_layout.split(label_input_area[1])[1],
@@ -374,32 +420,22 @@ impl Inner for SpringBootInner {
         let project_path = self.path.join(&self.name);
         fs::create_dir_all(&project_path)?;
         self.vcs.init_vcs_repo(&self.name, &self.path)?;
-        let language = if self.kotlin_version.is_empty() {
-            "java"
-        } else {
-            "kotlin"
-        };
-        let extension = if self.kotlin_version.is_empty() {
-            "kt"
-        } else {
-            "java"
-        };
         let params = [
-            ("groupId", self.group_id.as_str()),
-            ("artifactId", self.artifact_id.as_str()),
+            ("groupId", self.group_id.clone()),
+            ("artifactId", self.artifact_id.clone()),
             (
                 "type",
-                &format!(
+                format!(
                     "{}-project",
                     self.generator.value.to_string().to_lowercase()
                 ),
             ),
-            ("name", self.name.as_str()),
-            ("language", language),
-            ("javaVersion", self.java_version.as_str()),
-            ("bootVersion", self.boot_version.as_str()),
-            ("baseDir", self.name.as_str()),
-            ("dependencies", &self.dependencies.join(",")),
+            ("name", self.name.clone()),
+            ("language", self.language.value.to_string().to_lowercase()),
+            ("javaVersion", self.java_version.value.to_string()),
+            ("bootVersion", self.boot_version.clone()),
+            ("baseDir", self.name.clone()),
+            ("dependencies", self.dependencies.join(",")),
         ];
         let temp_zip_file = env::temp_dir().join("starter.zip");
         download_file(
@@ -413,11 +449,11 @@ impl Inner for SpringBootInner {
             self.path.join(&self.name),
             format!(
                 "src/main/{}/{}/{}/{}Application.{}",
-                language,
+                self.language.value.to_string().to_lowercase(),
                 self.group_id.replace('.', "/"),
                 self.artifact_id,
                 self.artifact_id[0 .. 1].to_uppercase() + &self.artifact_id[1 ..],
-                extension
+                self.language.value.extension()
             ),
         )?;
         Ok(())
