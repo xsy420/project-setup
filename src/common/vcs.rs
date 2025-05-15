@@ -1,3 +1,4 @@
+use crate::v2::RadioOptionValue;
 use anyhow::Error;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -5,6 +6,7 @@ use project_setup_derive::LoopableNumberedEnum;
 use std::{ffi::OsStr, path::PathBuf, process::Command};
 use strum_macros::{Display, EnumIter};
 #[derive(
+    Copy,
     Debug,
     Default,
     Display,
@@ -23,7 +25,7 @@ pub(crate) enum Vcs {
     Svn,
 }
 impl Vcs {
-    pub(crate) fn is_available(&self) -> bool {
+    pub(crate) fn is_available(self) -> bool {
         match self {
             Self::NotNeed => true,
             Self::Git | Self::Svn => Command::new(self)
@@ -34,7 +36,7 @@ impl Vcs {
         }
     }
 
-    pub(crate) fn init_vcs_repo(&self, name: &String, path: &PathBuf) -> Result<(), Error> {
+    pub(crate) fn init_vcs_repo(self, name: &String, path: &PathBuf) -> Result<(), Error> {
         match self {
             Vcs::Git => Command::new("git")
                 .arg("init")
@@ -63,3 +65,4 @@ impl AsRef<OsStr> for Vcs {
         })
     }
 }
+impl RadioOptionValue for Vcs {}
