@@ -1,3 +1,4 @@
+use crate::v2::RadioOptionValue;
 use anyhow::Result;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -9,7 +10,16 @@ use std::{
 };
 use strum_macros::{Display, EnumIter};
 #[derive(
-    Debug, Default, LoopableNumberedEnum, FromPrimitive, ToPrimitive, Clone, Display, EnumIter,
+    Copy,
+    Debug,
+    Default,
+    LoopableNumberedEnum,
+    FromPrimitive,
+    ToPrimitive,
+    Clone,
+    Display,
+    EnumIter,
+    PartialEq,
 )]
 #[numbered_enum(loop_within = 6)]
 pub(crate) enum Editor {
@@ -22,8 +32,8 @@ pub(crate) enum Editor {
     Clion,
     Rustrover,
 }
-impl Editor {
-    pub(crate) fn is_available(&self) -> bool {
+impl RadioOptionValue for Editor {
+    fn selectable(&self) -> bool {
         match self {
             Self::NotNeed => true,
             _ => Command::new(self.exe())
@@ -33,8 +43,9 @@ impl Editor {
                 .unwrap_or(false),
         }
     }
-
-    fn exe(&self) -> String {
+}
+impl Editor {
+    fn exe(self) -> String {
         match self {
             Self::NotNeed => String::new(),
             Self::Neovim => "nvim".to_string(),
@@ -43,7 +54,7 @@ impl Editor {
         }
     }
 
-    pub(crate) fn run(&self, project_path: PathBuf, main: String) -> Result<ExitStatus, Error> {
+    pub(crate) fn run(self, project_path: PathBuf, main: String) -> Result<ExitStatus, Error> {
         match self {
             Self::NotNeed => Ok(ExitStatus::default()),
             _ => Command::new(self.exe())

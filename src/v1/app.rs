@@ -300,7 +300,7 @@ fn focus_list_item_ui(
             ),
             FocusInput::Editor => Some(
                 Editor::iter()
-                    .filter(Editor::is_available)
+                    .filter(RadioOptionValue::selectable)
                     .map(|x| x.to_string())
                     .collect(),
             ),
