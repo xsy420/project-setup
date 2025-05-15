@@ -11,12 +11,12 @@ use std::process::Command;
 use zip::ZipArchive;
 #[cfg(not(feature = "zip"))]
 #[cfg(not(target_os = "windows"))]
-fn path_converter(path: &Path) -> PathBuf {
+fn path_converter(path: &PathBuf) -> PathBuf {
     Path::new(path).canonicalize().unwrap()
 }
 #[cfg(not(feature = "zip"))]
 #[cfg(target_os = "windows")]
-fn path_converter(path: &Path) -> PathBuf {
+fn path_converter(path: &PathBuf) -> PathBuf {
     let is_git_bash = std::env::var("MSYSTEM").map_or(false, |v| v.starts_with("MINGW"));
     if is_git_bash {
         let mut result = path.to_str().unwrap().replace('\\', "/");
@@ -33,8 +33,8 @@ fn path_converter(path: &Path) -> PathBuf {
 }
 #[cfg(not(feature = "zip"))]
 pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Error> {
-    let zip_path = path_converter(&zip_path);
-    let output_dir = path_converter(&output_dir);
+    let zip_path = path_converter(zip_path);
+    let output_dir = path_converter(output_dir);
     // 优先尝试 unzip (Linux/macOS/Windows if installed)
     if Command::new("unzip").arg("--help").output().is_ok() {
         Command::new("unzip")
