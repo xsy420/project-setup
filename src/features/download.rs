@@ -19,6 +19,7 @@ pub(crate) fn download_file(
     // 优先尝试 curl
     if Command::new("curl").arg("--version").output().is_ok() {
         Command::new("curl")
+            .arg("--silent")
             .arg("-X")
             .arg("POST")
             .arg("--data")
@@ -31,6 +32,7 @@ pub(crate) fn download_file(
     // 其次尝试 wget
     else if Command::new("wget").arg("--version").output().is_ok() {
         Command::new("wget")
+            .arg("--quiet")
             .arg("--post-data")
             .arg(&form_data)
             .arg("-O")
