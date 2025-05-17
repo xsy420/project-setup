@@ -1,4 +1,4 @@
-use super::{Inner, SpringBootInner, WipInner};
+use super::{CmakeInner, Inner, SpringBootInner, WipInner};
 use crate::common::{FocusInput, ProjectType};
 use anyhow::Result;
 use ratatui::{
@@ -19,7 +19,7 @@ impl Appv2 {
     pub(crate) fn new() -> Self {
         let inners: Vec<Box<dyn Inner>> = vec![
             Box::new(SpringBootInner::new()),
-            Box::new(WipInner {}),
+            Box::new(CmakeInner::new()),
             Box::new(WipInner {}),
             Box::new(WipInner {}),
         ];
