@@ -4,6 +4,7 @@ use super::{
 };
 use crate::common::{Editor, Vcs};
 use anyhow::Result;
+use heck::ToSnakeCase;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use ratatui::{
@@ -17,7 +18,7 @@ use ratatui::{
 use std::{env, fmt::Debug, fs, path::PathBuf};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
-#[derive(Clone, Copy, EnumIter, FromPrimitive)]
+#[derive(Clone, Copy, Display, EnumIter, FromPrimitive)]
 enum CmakeField {
     Name,
     ProjectVersion,
@@ -29,7 +30,10 @@ enum CmakeField {
     Path,
 }
 impl InnerField for CmakeField {
-    fn vaildate_string(self, _value: &mut str) -> String {
+    fn vaildate_string(self, value: &mut str) -> String {
+        if value.is_empty() {
+            return format!("{} cannot be empty", self.to_string().to_snake_case());
+        }
         String::new()
     }
 }
