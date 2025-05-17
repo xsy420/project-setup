@@ -2,95 +2,95 @@ use super::{
     Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, RadioOption,
     RadioOptionTrait, RadioOptionValue,
 };
-use crate::{
-    common::{Editor, Vcs},
-    features::{download_file, unzip},
-};
+use crate::common::{Editor, Vcs};
 use anyhow::Result;
 use heck::ToSnakeCase;
-use num_derive::{FromPrimitive, ToPrimitive};
-use num_traits::{FromPrimitive, ToPrimitive};
-use project_setup::LoopableNumberedEnum;
-use ratatui::style::Color;
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent},
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout},
+    prelude::Rect,
+    style::Color,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
-use std::{
-    env,
-    fmt::{Debug, Display},
-    fs,
-    path::PathBuf,
-};
+use std::{env, fmt::Debug, fs, path::PathBuf};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
-#[derive(Display, Clone, Copy, FromPrimitive, EnumIter)]
-enum SpringBootField {
+#[derive(Clone, Copy, Display, EnumIter, FromPrimitive)]
+enum CmakeField {
     Name,
-    Generator,
-    GroupId,
-    ArtifactId,
-    BootVersion,
+    ProjectVersion,
+    ProjectType,
     Language,
-    JavaVersion,
+    LanguageVersion,
     Editor,
     Vcs,
-    Dependencies,
     Path,
 }
-impl InnerField for SpringBootField {
+impl InnerField for CmakeField {
     fn vaildate_string(self, value: &mut str) -> String {
         if value.is_empty() {
             return format!("{} cannot be empty", self.to_string().to_snake_case());
         }
-        match self {
-            Self::GroupId | Self::ArtifactId => {
-                if value.ends_with('.') {
-                    format!("{} cannot end with '.'", self.to_string().to_snake_case())
-                } else {
-                    String::new()
-                }
-            }
-            _ => String::new(),
-        }
+        String::new()
     }
 }
-#[derive(
-    Clone,
-    Copy,
-    Default,
-    Display,
-    Debug,
-    ToPrimitive,
-    FromPrimitive,
-    LoopableNumberedEnum,
-    EnumIter,
-    PartialEq,
-)]
-#[numbered_enum(loop_within = 2)]
-enum Generator {
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
+enum ProjectType {
     #[default]
-    Maven,
-    Gradle,
+    Executable,
+    Library,
 }
-impl RadioOptionValue for Generator {
+impl RadioOptionValue for ProjectType {
     fn selectable(&self) -> bool {
         true
     }
 }
-#[derive(Clone, Copy, Default, Display, Debug, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
 enum Language {
     #[default]
-    Java,
-    Kotlin,
+    C,
+    Cpp,
 }
 impl Language {
-    fn extension(self) -> String {
+    fn main_file(self) -> String {
         match self {
-            Self::Java => "java",
-            Self::Kotlin => "kt",
+            Self::C => "main.c",
+            Self::Cpp => "main.cpp",
+        }
+        .to_string()
+    }
+
+    fn standard(self) -> String {
+        match self {
+            Self::C => "C",
+            Self::Cpp => "CXX",
+        }
+        .to_string()
+    }
+
+    fn main_file_content(self) -> String {
+        match self {
+            Self::C => {
+                "\
+                #include <stdio.h>\n\
+                \n\
+                int main() {\n\
+                \tprintf(\"Hello, World!\");\n\
+                \treturn 0;\n\
+                }\n"
+            }
+            Self::Cpp => {
+                "\
+                #include <iostream>\n\
+                \n\
+                int main() {\n\
+                \tstd::cout << \"Hello, World!\" << std::endl;\n\
+                \treturn 0;\n\
+                }\n"
+            }
         }
         .to_string()
     }
@@ -100,115 +100,77 @@ impl RadioOptionValue for Language {
         true
     }
 }
-#[derive(Clone, Copy, Default, Debug, EnumIter, PartialEq)]
-enum JavaVersion {
-    TwentyThree,
-    TwentyOne,
-    #[default]
-    Seventeen,
-    Eight,
-}
-impl Display for JavaVersion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(match self {
-            Self::TwentyThree => "23",
-            Self::TwentyOne => "21",
-            Self::Seventeen => "17",
-            Self::Eight => "8",
-        })
-        .finish()
-    }
-}
-impl RadioOptionValue for JavaVersion {
-    fn selectable(&self) -> bool {
-        true
-    }
-}
-pub(super) struct SpringBootInner {
+pub(super) struct CmakeInner {
     name: String,
-    generator: RadioOption<Generator>,
-    group_id: String,
-    artifact_id: String,
-    boot_version: String,
+    cmake_minimum_required: String,
+    project_type: RadioOption<ProjectType>,
     language: RadioOption<Language>,
-    java_version: RadioOption<JavaVersion>,
+    language_standard_version: String,
     editor: RadioOption<Editor>,
     vcs: RadioOption<Vcs>,
-    dependencies: Vec<String>,
     path: PathBuf,
     focus_index: usize,
     error_messages: Vec<String>,
 }
-impl SpringBootInner {
+impl CmakeInner {
     pub(super) fn new() -> Self {
         Self {
-            name: "demo".to_string(),
-            generator: RadioOption::default(),
-            group_id: "com.example".to_string(),
-            artifact_id: "demo".to_string(),
-            boot_version: "3.3.0".to_string(),
+            name: String::new(),
+            cmake_minimum_required: String::new(),
+            project_type: RadioOption::default(),
             language: RadioOption::default(),
-            java_version: RadioOption::default(),
+            language_standard_version: String::new(),
             editor: RadioOption::default(),
             vcs: RadioOption::default(),
-            dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
             focus_index: 0,
-            error_messages: SpringBootField::iter().map(|_| String::new()).collect(),
+            error_messages: CmakeField::iter().map(|_| String::new()).collect(),
         }
     }
 }
-impl InnerFieldMapping<SpringBootField> for SpringBootInner {
-    fn get_focus_field_mut(&mut self, field: SpringBootField) -> Option<&mut String> {
+impl InnerFieldMapping<CmakeField> for CmakeInner {
+    fn get_focus_field_mut(&mut self, field: CmakeField) -> Option<&mut String> {
         match field {
-            SpringBootField::Name => Some(&mut self.name),
-            SpringBootField::GroupId => Some(&mut self.group_id),
-            SpringBootField::ArtifactId => Some(&mut self.artifact_id),
-            SpringBootField::BootVersion => Some(&mut self.boot_version),
+            CmakeField::Name => Some(&mut self.name),
+            CmakeField::ProjectVersion => Some(&mut self.cmake_minimum_required),
+            CmakeField::LanguageVersion => Some(&mut self.language_standard_version),
             _ => None,
         }
     }
 
-    fn get_field(&self, field: SpringBootField) -> &dyn Debug {
+    fn get_field(&self, field: CmakeField) -> &dyn Debug {
         match field {
-            SpringBootField::Name => &self.name,
-            SpringBootField::Generator => &self.generator.value,
-            SpringBootField::GroupId => &self.group_id,
-            SpringBootField::ArtifactId => &self.artifact_id,
-            SpringBootField::BootVersion => &self.boot_version,
-            SpringBootField::Language => &self.language.value,
-            SpringBootField::JavaVersion => &self.java_version.value,
-            SpringBootField::Editor => &self.editor.value,
-            SpringBootField::Vcs => &self.vcs.value,
-            SpringBootField::Dependencies => &self.dependencies,
-            SpringBootField::Path => &self.path,
+            CmakeField::Name => &self.name,
+            CmakeField::ProjectVersion => &self.cmake_minimum_required,
+            CmakeField::ProjectType => &self.project_type.value,
+            CmakeField::Language => &self.language.value,
+            CmakeField::LanguageVersion => &self.language_standard_version,
+            CmakeField::Editor => &self.editor.value,
+            CmakeField::Vcs => &self.vcs.value,
+            CmakeField::Path => &self.path,
         }
     }
 
-    fn get_radio(&mut self, field: SpringBootField) -> Option<&mut dyn RadioOptionTrait> {
+    fn get_radio(&mut self, field: CmakeField) -> Option<&mut dyn RadioOptionTrait> {
         match field {
-            SpringBootField::Generator => Some(&mut self.generator),
-            SpringBootField::Language => Some(&mut self.language),
-            SpringBootField::JavaVersion => Some(&mut self.java_version),
-            SpringBootField::Editor => Some(&mut self.editor),
-            SpringBootField::Vcs => Some(&mut self.vcs),
+            CmakeField::ProjectType => Some(&mut self.project_type),
+            CmakeField::Language => Some(&mut self.language),
+            CmakeField::Editor => Some(&mut self.editor),
+            CmakeField::Vcs => Some(&mut self.vcs),
             _ => None,
         }
     }
 }
-impl InnerTipLabel for SpringBootInner {
+impl InnerTipLabel for CmakeInner {
     fn tips() -> &'static [&'static str] {
         &[
             "Please input the name of this project",
-            "Use arrow keys to select generator",
-            "Please input the group_id of this project",
-            "Please input the artifact_id of this project",
-            "Please input the boot_version of this project",
+            "Please input the cmake_minimum_required of this project",
+            "Use arrow keys to select project_type",
             "Use arrow keys to select language",
-            "Use arrow keys to select java_version",
+            "Use arrow keys to select language_version",
             "Use arrow keys to select editor",
             "Use arrow keys to select vcs tool",
-            "Please input the dependencies of this project",
             "Please input the path of this project",
         ]
     }
@@ -216,20 +178,17 @@ impl InnerTipLabel for SpringBootInner {
     fn labels() -> &'static [&'static str] {
         &[
             "name",
-            "generator",
-            "group_id",
-            "artifact_id",
-            "boot_version",
+            "cmake_minimum_required",
+            "project_type",
             "language",
-            "java_version",
+            "language_version",
             "editor",
             "vcs",
-            "dependencies",
             "path",
         ]
     }
 }
-impl Inner for SpringBootInner {
+impl Inner for CmakeInner {
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect) {
         let labels = Self::labels();
         // 表单布局 - 垂直排列输入框
@@ -279,7 +238,7 @@ impl Inner for SpringBootInner {
                         split_tip_input_error_layout.split(label_input_area[1])[0],
                     );
                 }
-                let field = SpringBootField::from_usize(index).unwrap();
+                let field = CmakeField::from_usize(index).unwrap();
                 if let Some(r) = self.get_radio(field) {
                     f.render_widget(
                         Paragraph::new(
@@ -327,8 +286,8 @@ impl Inner for SpringBootInner {
     }
 
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
-        let field_len = SpringBootField::iter().count();
-        let field = SpringBootField::from_usize(self.focus_index).unwrap();
+        let field_len = CmakeField::iter().count();
+        let field = CmakeField::from_usize(self.focus_index).unwrap();
         match key.code {
             KeyCode::Char(c) => {
                 if let Some(x) = self.get_focus_field_mut(field) {
@@ -368,42 +327,29 @@ impl Inner for SpringBootInner {
         let project_path = self.path.join(&self.name);
         fs::create_dir_all(&project_path)?;
         self.vcs.value.init_vcs_repo(&self.name, &self.path)?;
-        let params = [
-            ("groupId", self.group_id.clone()),
-            ("artifactId", self.artifact_id.clone()),
-            (
-                "type",
-                format!(
-                    "{}-project",
-                    self.generator.value.to_string().to_lowercase()
-                ),
-            ),
-            ("name", self.name.clone()),
-            ("language", self.language.value.to_string().to_lowercase()),
-            ("javaVersion", self.java_version.value.to_string()),
-            ("bootVersion", self.boot_version.clone()),
-            ("baseDir", self.name.clone()),
-            ("dependencies", self.dependencies.join(",")),
-        ];
-        let temp_zip_file = env::temp_dir().join("starter.zip");
-        download_file(
-            "https://start.spring.io/starter.zip",
-            &params,
-            &temp_zip_file,
+        let cmake_lists = format!(
+            "\
+                cmake_minimum_required(VERSION {})\n\
+                project({})\n\
+                \n\
+                set(CMAKE_{}_STANDARD {})\n\
+                \n\
+                add_{}(${{PROJECT_NAME}} {})\n",
+            self.cmake_minimum_required,
+            self.name,
+            self.language.value.standard(),
+            self.language_standard_version,
+            self.project_type.value.to_string().to_lowercase(),
+            self.language.value.main_file()
+        );
+        fs::write(project_path.join("CMakeLists.txt"), cmake_lists)?;
+        fs::write(
+            project_path.join(self.language.value.main_file()),
+            self.language.value.main_file_content(),
         )?;
-        unzip(&temp_zip_file, &self.path)?;
-        fs::remove_file(&temp_zip_file)?;
-        self.editor.value.run(
-            self.path.join(&self.name),
-            format!(
-                "src/main/{}/{}/{}/{}Application.{}",
-                self.language.value.to_string().to_lowercase(),
-                self.group_id.replace('.', "/"),
-                self.artifact_id,
-                self.artifact_id[0 .. 1].to_uppercase() + &self.artifact_id[1 ..],
-                self.language.value.extension()
-            ),
-        )?;
+        self.editor
+            .value
+            .run(project_path, self.language.value.main_file())?;
         Ok(())
     }
 }

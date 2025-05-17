@@ -7,11 +7,11 @@ pub(crate) trait RadioOptionValue:
     fn selectable(&self) -> bool;
 }
 #[derive(Clone)]
-pub(crate) struct RadioOption<V>
+pub(super) struct RadioOption<V>
 where
     V: RadioOptionValue,
 {
-    pub(crate) value: V,
+    pub(super) value: V,
     id: usize,
 }
 impl<V: RadioOptionValue> Default for RadioOption<V> {
@@ -27,7 +27,7 @@ impl<V: RadioOptionValue> Default for RadioOption<V> {
         Self { value, id }
     }
 }
-pub(crate) trait RadioOptionTrait {
+pub(super) trait RadioOptionTrait {
     fn next(&mut self);
     fn prev(&mut self);
     fn get_symbol(&self, curr: usize) -> String;
