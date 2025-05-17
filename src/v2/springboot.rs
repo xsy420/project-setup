@@ -7,6 +7,7 @@ use crate::{
     features::{download_file, unzip},
 };
 use anyhow::Result;
+use heck::ToSnakeCase;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup::LoopableNumberedEnum;
@@ -25,7 +26,7 @@ use std::{
 };
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
-#[derive(Debug, Clone, Copy, FromPrimitive, EnumIter)]
+#[derive(Debug, Display, Clone, Copy, FromPrimitive, EnumIter)]
 enum SpringBootField {
     Name,
     Generator,
@@ -42,16 +43,9 @@ enum SpringBootField {
 impl InnerField for SpringBootField {
     fn vaildate_string(self, value: &mut str) -> String {
         match self {
-            Self::GroupId => {
+            Self::GroupId | Self::ArtifactId => {
                 if value.ends_with('.') {
-                    "group_id cannot end with '.'".to_string()
-                } else {
-                    String::new()
-                }
-            }
-            Self::ArtifactId => {
-                if value.ends_with('.') {
-                    "artifact_id cannot end with '.'".to_string()
+                    format!("{} cannot end with '.'", self.to_string().to_snake_case())
                 } else {
                     String::new()
                 }
