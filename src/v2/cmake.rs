@@ -132,6 +132,8 @@ impl InnerFieldMapping<CmakeField> for CmakeInner {
     fn get_focus_field_mut(&mut self, field: CmakeField) -> Option<&mut String> {
         match field {
             CmakeField::Name => Some(&mut self.name),
+            CmakeField::ProjectVersion => Some(&mut self.cmake_minimum_required),
+            CmakeField::LanguageVersion => Some(&mut self.language_standard_version),
             _ => None,
         }
     }
