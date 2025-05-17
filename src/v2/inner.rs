@@ -1,7 +1,9 @@
 use super::RadioOptionTrait;
 use anyhow::Result;
+use num_traits::FromPrimitive;
 use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
+use strum::IntoEnumIterator;
 #[derive(Default)]
 pub(super) struct InnerHandleKeyEventOutput {
     pub(crate) esc_handled: bool,
@@ -19,7 +21,9 @@ impl InnerHandleKeyEventOutput {
         self
     }
 }
-pub(super) trait InnerField {
+pub(super) trait InnerField:
+    Clone + Copy + Display + IntoEnumIterator + FromPrimitive
+{
     fn vaildate_string(self, value: &mut str) -> String;
 }
 pub(super) trait InnerFieldMapping<F: InnerField> {

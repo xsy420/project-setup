@@ -26,7 +26,7 @@ use std::{
 };
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
-#[derive(Debug, Display, Clone, Copy, FromPrimitive, EnumIter)]
+#[derive(Display, Clone, Copy, FromPrimitive, EnumIter)]
 enum SpringBootField {
     Name,
     Generator,
