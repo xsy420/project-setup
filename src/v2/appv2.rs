@@ -1,4 +1,4 @@
-use super::{Inner, SpringBootInner, WipInner};
+use super::{CmakeInner, Inner, SpringBootInner, WipInner};
 use crate::common::{FocusInput, ProjectType};
 use anyhow::Result;
 use ratatui::{
@@ -11,15 +11,15 @@ use ratatui::{
 };
 use strum::IntoEnumIterator;
 pub(crate) struct Appv2 {
-    pub(crate) selected: ProjectType,
-    pub(crate) focus_left_side: bool,
-    pub(crate) inners: Vec<Box<dyn Inner>>,
+    selected: ProjectType,
+    focus_left_side: bool,
+    inners: Vec<Box<dyn Inner>>,
 }
 impl Appv2 {
     pub(crate) fn new() -> Self {
         let inners: Vec<Box<dyn Inner>> = vec![
             Box::new(SpringBootInner::new()),
-            Box::new(WipInner {}),
+            Box::new(CmakeInner::new()),
             Box::new(WipInner {}),
             Box::new(WipInner {}),
         ];
