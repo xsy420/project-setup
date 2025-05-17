@@ -5,7 +5,7 @@ use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect};
 use std::fmt::{Debug, Display};
 use strum::IntoEnumIterator;
 #[derive(Default)]
-pub(super) struct InnerHandleKeyEventOutput {
+pub(crate) struct InnerHandleKeyEventOutput {
     pub(crate) esc_handled: bool,
     pub(crate) exit: bool,
 }
@@ -35,7 +35,7 @@ pub(super) trait InnerTipLabel {
     fn tips() -> &'static [&'static str];
     fn labels() -> &'static [&'static str];
 }
-pub(super) trait Inner {
+pub(crate) trait Inner {
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect);
     fn bottom_help_message(&self) -> String;
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput;

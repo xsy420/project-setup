@@ -1,12 +1,13 @@
-mod appv2;
+mod application;
 mod cmake;
 mod inner;
 mod radio_option;
 mod springboot;
 mod wip;
-pub(crate) use appv2::{Appv2, run_app};
+pub(crate) use application::Application;
 use cmake::CmakeInner;
-use inner::{Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel};
+use inner::Inner;
+use inner::{InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel};
 pub(crate) use radio_option::RadioOptionValue;
 use radio_option::{RadioOption, RadioOptionTrait};
 use springboot::SpringBootInner;
