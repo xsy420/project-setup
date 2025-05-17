@@ -9,9 +9,33 @@ description = "A TUI to help you setup a project easily."
 
 homepage = "https://github.com/xsy420/project-setup"
 repository = "https://github.com/xsy420/project-setup"
-readme = "../README.md"
+readme = "README.md"
 rust-version = "1.86.0"
 
+[package.metadata.deb]
+assets = [
+  [
+    "target/release/project-setup",
+    "/usr/bin/",
+    "755",
+  ],
+  [
+    "LICENSE",
+    "/usr/share/doc/project-setup/LICENSE",
+    "644",
+  ],
+  [
+    "README.md",
+    "/usr/share/licenses/project-setup/README.md",
+    "644",
+  ],
+]
+[package.metadata.generate-rpm]
+assets = [
+  { source = "target/release/project-setup", dest = "/usr/bin/project-setup", mode = "755" },
+  { source = "LICENSE", dest = "/usr/share/licenses/project-setup/LICENSE", mode = "644" },
+  { source = "README.md", dest = "/usr/share/doc/project-setup/README.md", mode = "644" },
+]
 [profile.release]
 strip = true
 
