@@ -1,7 +1,10 @@
 mod app;
+mod args;
 mod common;
 mod features;
 use anyhow::Result;
+use app::Application;
+use args::Args;
 use clap::Parser;
 use ratatui::{
     Terminal,
@@ -12,12 +15,8 @@ use ratatui::{
     prelude::*,
 };
 use std::io::{self};
-/// A TUI to help you setup a project easily.
-#[derive(Parser)]
-#[command(version, about)]
-struct Args {}
 fn main() -> Result<()> {
-    Args::parse();
+    let args = Args::parse();
     // 设置终端
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -25,7 +24,7 @@ fn main() -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     // 创建应用
-    let app = app::Application::new();
+    let app = Application::new(args);
     let res = app.run(&mut terminal);
     // 清理终端
     disable_raw_mode()?;
