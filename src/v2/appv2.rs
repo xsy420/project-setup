@@ -11,9 +11,9 @@ use ratatui::{
 };
 use strum::IntoEnumIterator;
 pub(crate) struct Appv2 {
-    pub(crate) selected: ProjectType,
-    pub(crate) focus_left_side: bool,
-    pub(crate) inners: Vec<Box<dyn Inner>>,
+    selected: ProjectType,
+    focus_left_side: bool,
+    inners: Vec<Box<dyn Inner>>,
 }
 impl Appv2 {
     pub(crate) fn new() -> Self {
