@@ -296,7 +296,9 @@ impl Inner for CmakeInner {
                 }
             }
             KeyCode::Enter => {
-                return InnerHandleKeyEventOutput::default().with_exited();
+                if self.error_messages.iter().all(String::is_empty) {
+                    return InnerHandleKeyEventOutput::default().with_exited();
+                }
             }
             KeyCode::Tab => {
                 self.focus_index = (self.focus_index + 1) % field_len;
