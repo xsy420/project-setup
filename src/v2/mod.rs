@@ -6,7 +6,7 @@ mod springboot;
 mod wip;
 pub(crate) use appv2::{Appv2, run_app};
 use cmake::CmakeInner;
-use inner::{Inner, InnerHandleKeyEventOutput};
+use inner::{Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel};
 pub(crate) use radio_option::RadioOptionValue;
 use radio_option::{RadioOption, RadioOptionTrait};
 use springboot::SpringBootInner;

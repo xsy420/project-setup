@@ -1,4 +1,7 @@
-use super::{Inner, InnerHandleKeyEventOutput, RadioOption, RadioOptionTrait, RadioOptionValue};
+use super::{
+    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, RadioOption,
+    RadioOptionTrait, RadioOptionValue,
+};
 use crate::{
     common::{Editor, Vcs},
     features::{download_file, unzip},
@@ -36,7 +39,7 @@ enum SpringBootField {
     Dependencies,
     Path,
 }
-impl SpringBootField {
+impl InnerField for SpringBootField {
     fn vaildate_string(self, value: &mut str) -> String {
         match self {
             Self::GroupId => {
@@ -137,7 +140,6 @@ pub(super) struct SpringBootInner {
     dependencies: Vec<String>,
     path: PathBuf,
     focus_index: usize,
-    tip_messages: Vec<String>,
     error_messages: Vec<String>,
 }
 impl SpringBootInner {
@@ -155,33 +157,18 @@ impl SpringBootInner {
             dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
             focus_index: 0,
-            tip_messages: [
-                "Please input the name of this project",
-                "Use arrow keys to select generator",
-                "Please input the group_id of this project",
-                "Please input the artifact_id of this project",
-                "Please input the boot_version of this project",
-                "Use arrow keys to select language",
-                "Use arrow keys to select java_version",
-                "Use arrow keys to select editor",
-                "Use arrow keys to select vcs tool",
-                "Please input the dependencies of this project",
-                "Please input the path of this project",
-            ]
-            .iter()
-            .map(|x| (*x).to_string())
-            .collect(),
             error_messages: SpringBootField::iter().map(|_| String::new()).collect(),
         }
     }
-
-    fn get_focus_field_mut(&mut self, field: SpringBootField) -> Result<&mut String, String> {
+}
+impl InnerFieldMapping<SpringBootField> for SpringBootInner {
+    fn get_focus_field_mut(&mut self, field: SpringBootField) -> Option<&mut String> {
         match field {
-            SpringBootField::Name => Ok(&mut self.name),
-            SpringBootField::GroupId => Ok(&mut self.group_id),
-            SpringBootField::ArtifactId => Ok(&mut self.artifact_id),
-            SpringBootField::BootVersion => Ok(&mut self.boot_version),
-            _ => Err(String::new()),
+            SpringBootField::Name => Some(&mut self.name),
+            SpringBootField::GroupId => Some(&mut self.group_id),
+            SpringBootField::ArtifactId => Some(&mut self.artifact_id),
+            SpringBootField::BootVersion => Some(&mut self.boot_version),
+            _ => None,
         }
     }
 
@@ -210,6 +197,23 @@ impl SpringBootInner {
             SpringBootField::Vcs => Some(&mut self.vcs),
             _ => None,
         }
+    }
+}
+impl InnerTipLabel for SpringBootInner {
+    fn tips() -> &'static [&'static str] {
+        &[
+            "Please input the name of this project",
+            "Use arrow keys to select generator",
+            "Please input the group_id of this project",
+            "Please input the artifact_id of this project",
+            "Please input the boot_version of this project",
+            "Use arrow keys to select language",
+            "Use arrow keys to select java_version",
+            "Use arrow keys to select editor",
+            "Use arrow keys to select vcs tool",
+            "Please input the dependencies of this project",
+            "Please input the path of this project",
+        ]
     }
 
     fn labels() -> &'static [&'static str] {
@@ -272,7 +276,7 @@ impl Inner for SpringBootInner {
                     .border_type(BorderType::Thick);
                 if focus_right_side && index == self.focus_index {
                     f.render_widget(
-                        Paragraph::new(self.tip_messages[index].clone())
+                        Paragraph::new(Self::tips()[index])
                             .style(Color::Blue)
                             .centered(),
                         split_tip_input_error_layout.split(label_input_area[1])[0],
@@ -330,15 +334,16 @@ impl Inner for SpringBootInner {
         let field = SpringBootField::from_usize(self.focus_index).unwrap();
         match key.code {
             KeyCode::Char(c) => {
-                if let Ok(x) = self.get_focus_field_mut(field) {
+                if let Some(x) = self.get_focus_field_mut(field) {
                     x.push(c);
                     self.error_messages[self.focus_index] = field.vaildate_string(x);
                 }
             }
             KeyCode::Backspace => {
-                self.get_focus_field_mut(field).ok().unwrap().pop();
-                self.error_messages[self.focus_index] =
-                    field.vaildate_string(self.get_focus_field_mut(field).unwrap());
+                if let Some(x) = self.get_focus_field_mut(field) {
+                    x.pop();
+                    self.error_messages[self.focus_index] = field.vaildate_string(x);
+                }
             }
             KeyCode::Enter => {
                 return InnerHandleKeyEventOutput::default().with_exited();

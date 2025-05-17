@@ -1,4 +1,7 @@
-use super::{Inner, InnerHandleKeyEventOutput, RadioOption, RadioOptionTrait, RadioOptionValue};
+use super::{
+    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, RadioOption,
+    RadioOptionTrait, RadioOptionValue,
+};
 use crate::common::{Editor, Vcs};
 use anyhow::Result;
 use num_derive::FromPrimitive;
@@ -25,7 +28,7 @@ enum CmakeField {
     Vcs,
     Path,
 }
-impl CmakeField {
+impl InnerField for CmakeField {
     fn vaildate_string(self, _value: &mut str) -> String {
         String::new()
     }
@@ -120,7 +123,8 @@ impl CmakeInner {
             error_messages: CmakeField::iter().map(|_| String::new()).collect(),
         }
     }
-
+}
+impl InnerFieldMapping<CmakeField> for CmakeInner {
     fn get_focus_field_mut(&mut self, field: CmakeField) -> Option<&mut String> {
         match field {
             CmakeField::Name => Some(&mut self.name),
@@ -150,7 +154,8 @@ impl CmakeInner {
             _ => None,
         }
     }
-
+}
+impl InnerTipLabel for CmakeInner {
     fn tips() -> &'static [&'static str] {
         &[
             "Please input the name of this project",

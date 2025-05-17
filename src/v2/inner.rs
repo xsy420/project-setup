@@ -1,5 +1,7 @@
+use super::RadioOptionTrait;
 use anyhow::Result;
 use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect};
+use std::fmt::Debug;
 #[derive(Default)]
 pub(super) struct InnerHandleKeyEventOutput {
     pub(crate) esc_handled: bool,
@@ -16,6 +18,18 @@ impl InnerHandleKeyEventOutput {
         self.esc_handled = true;
         self
     }
+}
+pub(super) trait InnerField {
+    fn vaildate_string(self, value: &mut str) -> String;
+}
+pub(super) trait InnerFieldMapping<F: InnerField> {
+    fn get_focus_field_mut(&mut self, field: F) -> Option<&mut String>;
+    fn get_field(&self, field: F) -> &dyn Debug;
+    fn get_radio(&mut self, field: F) -> Option<&mut dyn RadioOptionTrait>;
+}
+pub(super) trait InnerTipLabel {
+    fn tips() -> &'static [&'static str];
+    fn labels() -> &'static [&'static str];
 }
 pub(super) trait Inner {
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect);
