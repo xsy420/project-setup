@@ -1,5 +1,5 @@
 use super::{CmakeInner, Inner, SpringBootInner, WipInner};
-use crate::common::{FocusInput, ProjectType};
+use crate::common::ProjectType;
 use anyhow::Result;
 use ratatui::{
     Frame, Terminal,
@@ -41,7 +41,7 @@ fn ui(frame: &mut Frame, app: &mut Appv2) {
     let list = List::new(items)
         .block(
             Block::default()
-                .title(FocusInput::ProjectType.title())
+                .title("Project Type")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(if app.focus_left_side {
                     Color::Red
