@@ -100,7 +100,7 @@ impl RadioOptionValue for Language {
         true
     }
 }
-pub(super) struct CmakeInner {
+pub(crate) struct CmakeInner {
     name: String,
     cmake_minimum_required: String,
     project_type: RadioOption<ProjectType>,
@@ -113,7 +113,7 @@ pub(super) struct CmakeInner {
     error_messages: Vec<String>,
 }
 impl CmakeInner {
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             name: String::new(),
             cmake_minimum_required: String::new(),

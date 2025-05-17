@@ -5,7 +5,7 @@ use ratatui::{
     style::{Style, Stylize},
 };
 use tui_big_text::{BigText, PixelSize};
-pub(super) struct WipInner {}
+pub(crate) struct WipInner {}
 impl Inner for WipInner {
     fn render(&mut self, f: &mut ratatui::Frame, _: bool, area: ratatui::prelude::Rect) {
         f.render_widget(

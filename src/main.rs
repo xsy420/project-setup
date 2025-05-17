@@ -1,6 +1,6 @@
+mod app;
 mod common;
 mod features;
-mod v2;
 use anyhow::Result;
 use clap::Parser;
 use ratatui::{
@@ -25,8 +25,8 @@ fn main() -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     // 创建应用
-    let mut appv2 = v2::Appv2::new();
-    let res = v2::run_app(&mut terminal, &mut appv2);
+    let app = app::Application::new();
+    let res = app.run(&mut terminal);
     // 清理终端
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;

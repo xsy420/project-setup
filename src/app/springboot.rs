@@ -124,7 +124,7 @@ impl RadioOptionValue for JavaVersion {
         true
     }
 }
-pub(super) struct SpringBootInner {
+pub(crate) struct SpringBootInner {
     name: String,
     generator: RadioOption<Generator>,
     group_id: String,
@@ -140,7 +140,7 @@ pub(super) struct SpringBootInner {
     error_messages: Vec<String>,
 }
 impl SpringBootInner {
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             name: "demo".to_string(),
             generator: RadioOption::default(),
