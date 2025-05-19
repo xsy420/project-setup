@@ -1,4 +1,4 @@
-use crate::common::AppDirection;
+use crate::common::LoopNumber;
 use std::fmt::Display;
 use strum::IntoEnumIterator;
 pub(crate) trait RadioOptionValue:
@@ -12,17 +12,17 @@ where
     V: RadioOptionValue,
 {
     pub(super) value: V,
-    id: usize,
+    id: LoopNumber,
 }
 impl<V: RadioOptionValue> Default for RadioOption<V> {
     fn default() -> Self {
         let value = V::default();
-        let mut id = 0;
+        let mut id = LoopNumber::new(V::iter().filter(RadioOptionValue::selectable).count());
         for v in V::iter().filter(RadioOptionValue::selectable) {
             if v == value {
                 break;
             }
-            id += 1;
+            id = id.next();
         }
         Self { value, id }
     }
@@ -35,23 +35,23 @@ pub(super) trait RadioOptionTrait {
 }
 impl<V: RadioOptionValue> RadioOptionTrait for RadioOption<V> {
     fn next(&mut self) {
-        self.id = AppDirection::Next.get_counter(Some(self.id), self.length());
+        self.id = self.id.next();
         self.value = V::iter()
             .filter(RadioOptionValue::selectable)
-            .collect::<Vec<V>>()[self.id];
+            .collect::<Vec<V>>()[self.id.value];
     }
 
     fn prev(&mut self) {
-        self.id = AppDirection::Prev.get_counter(Some(self.id), self.length());
+        self.id = self.id.prev();
         self.value = V::iter()
             .filter(RadioOptionValue::selectable)
-            .collect::<Vec<V>>()[self.id];
+            .collect::<Vec<V>>()[self.id.value];
     }
 
     fn get_symbol(&self, curr: usize) -> String {
         format!(
             "{} {}",
-            if self.id == curr { "◉" } else { "○" },
+            if self.id.value == curr { "◉" } else { "○" },
             V::iter()
                 .filter(RadioOptionValue::selectable)
                 .collect::<Vec<V>>()[curr]
@@ -59,6 +59,6 @@ impl<V: RadioOptionValue> RadioOptionTrait for RadioOption<V> {
     }
 
     fn length(&self) -> usize {
-        V::iter().filter(RadioOptionValue::selectable).count()
+        self.id.length
     }
 }
