@@ -6,6 +6,7 @@ use strum_macros::{Display, EnumIter};
 #[derive(
     Debug,
     Clone,
+    Copy,
     Default,
     EnumIter,
     Display,

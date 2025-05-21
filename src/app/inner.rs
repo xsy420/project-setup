@@ -36,6 +36,7 @@ pub(super) trait InnerTipLabel {
     fn labels() -> &'static [&'static str];
 }
 pub(crate) trait Inner {
+    fn prepare(&self) -> Result<()>;
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect);
     fn bottom_help_message(&self) -> String;
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput;

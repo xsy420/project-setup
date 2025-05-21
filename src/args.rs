@@ -1,7 +1,7 @@
 use crate::common::ProjectType;
 use clap::Parser;
 /// A TUI to help you setup a project easily.
-#[derive(Parser)]
+#[derive(Parser, Clone, Copy)]
 #[command(version, about)]
 pub(crate) struct Args {
     /// the only project type to create (skips project selection)

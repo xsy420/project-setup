@@ -189,6 +189,10 @@ impl InnerTipLabel for CmakeInner {
     }
 }
 impl Inner for CmakeInner {
+    fn prepare(&self) -> Result<()> {
+        Ok(())
+    }
+
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect) {
         let labels = Self::labels();
         // 表单布局 - 垂直排列输入框
