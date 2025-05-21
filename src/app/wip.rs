@@ -7,6 +7,10 @@ use ratatui::{
 use tui_big_text::{BigText, PixelSize};
 pub(crate) struct WipInner {}
 impl Inner for WipInner {
+    fn prepare(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+
     fn render(&mut self, f: &mut ratatui::Frame, _: bool, area: ratatui::prelude::Rect) {
         f.render_widget(
             BigText::builder()

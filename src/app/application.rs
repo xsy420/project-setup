@@ -92,7 +92,7 @@ impl Application {
                 .split(frame.area());
             frame.render_widget(help_bar, bottom_layout[1]);
         } else {
-            let inner = self.inners[self.default_inner.clone().unwrap().num()].as_mut();
+            let inner = self.inners[self.default_inner.unwrap().num()].as_mut();
             inner.render(frame, true, frame.area());
             // 底部帮助栏
             let help_bar = Paragraph::new(if self.focus_left_side {
@@ -111,6 +111,13 @@ impl Application {
     }
 
     pub(crate) fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<()> {
+        if let Some(i) = self.default_inner {
+            self.inners[i.num()].prepare()?;
+        } else {
+            for i in &self.inners {
+                i.prepare()?;
+            }
+        }
         loop {
             terminal.draw(|f| self.ui(f))?;
             // 处理输入事件
@@ -136,9 +143,9 @@ impl Application {
                     }
                 } else {
                     let inner = self.inners[if self.default_inner.is_some() {
-                        self.default_inner.clone().unwrap()
+                        self.default_inner.unwrap()
                     } else {
-                        self.selected.clone()
+                        self.selected
                     }
                     .num()]
                     .as_mut();

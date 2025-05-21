@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     common::{Editor, Vcs},
-    features::{download_file, unzip},
+    features::{RequestMethod, download_file, unzip},
 };
 use anyhow::Result;
 use heck::ToSnakeCase;
@@ -18,6 +18,8 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Block, BorderType, Borders, Paragraph},
 };
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{
     env,
     fmt::{Debug, Display},
@@ -26,6 +28,114 @@ use std::{
 };
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
+#[derive(Debug, Serialize, Deserialize)]
+struct SpringInitializrMetadata {
+    #[serde(rename = "type")]
+    metadata_type: Value,
+    #[serde(rename = "_links")]
+    links: Value,
+    dependencies: Dependencies,
+    #[serde(rename = "bootVersion")]
+    boot_versions: BootVersions,
+    packaging: Packaging,
+    #[serde(rename = "javaVersion")]
+    java_versions: JavaVersions,
+    language: Languages,
+    #[serde(rename = "groupId")]
+    group_id: GroupId,
+    #[serde(rename = "artifactId")]
+    artifact_id: ArtifactId,
+    version: Version,
+    name: Name,
+    description: Description,
+    #[serde(rename = "packageName")]
+    package_name: PackageName,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Dependencies {
+    r#type: String,
+    values: Vec<DependencyGroup>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct DependencyGroup {
+    name: String,
+    values: Vec<Dependency>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Dependency {
+    id: String,
+    name: String,
+    description: String,
+    links: Option<Value>,
+    version_range: Option<String>,
+    version_requirement: Option<String>,
+    weight: Option<i32>,
+    compatibility_range: Option<String>,
+    repository: Option<String>,
+    bom: Option<String>,
+    platform: Option<bool>,
+    starter: Option<bool>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct BootVersions {
+    r#type: String,
+    default: String,
+    values: Vec<IdName>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Packaging {
+    r#type: String,
+    default: String,
+    values: Vec<IdName>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct JavaVersions {
+    r#type: String,
+    default: String,
+    values: Vec<IdName>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Languages {
+    r#type: String,
+    default: String,
+    values: Vec<IdName>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct IdName {
+    id: String,
+    name: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct GroupId {
+    r#type: String,
+    default: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct ArtifactId {
+    r#type: String,
+    default: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Version {
+    r#type: String,
+    default: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Name {
+    r#type: String,
+    default: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Description {
+    r#type: String,
+    default: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct PackageName {
+    r#type: String,
+    default: String,
+}
+static mut METADATA: Option<SpringInitializrMetadata> = None;
 #[derive(Display, Clone, Copy, FromPrimitive, EnumIter)]
 enum SpringBootField {
     Name,
@@ -230,6 +340,23 @@ impl InnerTipLabel for SpringBootInner {
     }
 }
 impl Inner for SpringBootInner {
+    fn prepare(&self) -> Result<()> {
+        let metadata_file = env::temp_dir().join("springboot_metadata.json");
+        if !metadata_file.exists() {
+            download_file(
+                "https://start.spring.io/metadata/client",
+                &RequestMethod::GET,
+                &[],
+                &metadata_file,
+            )?;
+        }
+        let data = fs::read_to_string(metadata_file)?;
+        unsafe {
+            METADATA = Some(serde_json::from_str(&data)?);
+        }
+        Ok(())
+    }
+
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect) {
         let labels = Self::labels();
         // 表单布局 - 垂直排列输入框
@@ -388,6 +515,7 @@ impl Inner for SpringBootInner {
         let temp_zip_file = env::temp_dir().join("starter.zip");
         download_file(
             "https://start.spring.io/starter.zip",
+            &RequestMethod::POST,
             &params,
             &temp_zip_file,
         )?;

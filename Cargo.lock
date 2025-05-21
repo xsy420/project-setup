@@ -1080,6 +1080,8 @@ dependencies = [
  "project_setup_derive",
  "ratatui",
  "reqwest",
+ "serde",
+ "serde_json",
  "strum 0.27.1",
  "strum_macros 0.27.1",
  "tui-big-text",
