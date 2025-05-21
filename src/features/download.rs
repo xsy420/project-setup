@@ -62,8 +62,8 @@ pub(crate) fn download_file(
     output: &PathBuf,
 ) -> Result<(), Error> {
     let response = match method {
-        RequestMethod::GET => client.get(url).query(params).send()?,
-        RequestMethod::POST => client.post(url).form(params).send()?,
+        RequestMethod::GET => Client::new().get(url).query(params).send()?,
+        RequestMethod::POST => Client::new().post(url).form(params).send()?,
     };
     let content = response.bytes()?;
     std::fs::write(output, content)?;
