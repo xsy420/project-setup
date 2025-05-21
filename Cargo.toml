@@ -10,7 +10,7 @@ description = "A TUI to help you setup a project easily."
 homepage = "https://github.com/xsy420/project-setup"
 repository = "https://github.com/xsy420/project-setup"
 readme = "README.md"
-rust-version = "1.86.0"
+rust-version = "1.87.0"
 
 [package.metadata.deb]
 assets = [
