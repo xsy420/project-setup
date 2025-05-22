@@ -11,11 +11,11 @@ use heck::ToSnakeCase;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup::LoopableNumberedEnum;
-use ratatui::style::Color;
 use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout, Rect},
+    style::Color,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
 use serde::{Deserialize, Serialize};
@@ -32,8 +32,6 @@ use strum_macros::{Display, EnumIter};
 struct SpringInitializrMetadata {
     #[serde(rename = "type")]
     metadata_type: Value,
-    #[serde(rename = "_links")]
-    links: Value,
     dependencies: Dependencies,
     #[serde(rename = "bootVersion")]
     boot_versions: BootVersions,
@@ -66,15 +64,8 @@ struct Dependency {
     id: String,
     name: String,
     description: String,
-    links: Option<Value>,
+    #[serde(rename = "versionRange")]
     version_range: Option<String>,
-    version_requirement: Option<String>,
-    weight: Option<i32>,
-    compatibility_range: Option<String>,
-    repository: Option<String>,
-    bom: Option<String>,
-    platform: Option<bool>,
-    starter: Option<bool>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct BootVersions {
