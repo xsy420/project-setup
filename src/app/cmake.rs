@@ -2,7 +2,7 @@ use super::{
     Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, RadioOption,
     RadioOptionTrait, RadioOptionValue,
 };
-use crate::common::{Editor, Vcs};
+use crate::common::{Editor, LoopNumber, Vcs};
 use anyhow::Result;
 use heck::ToSnakeCase;
 use num_derive::FromPrimitive;
@@ -109,7 +109,7 @@ pub(crate) struct CmakeInner {
     editor: RadioOption<Editor>,
     vcs: RadioOption<Vcs>,
     path: PathBuf,
-    focus_index: usize,
+    focus_index: LoopNumber,
     error_messages: Vec<String>,
 }
 impl CmakeInner {
@@ -123,7 +123,7 @@ impl CmakeInner {
             editor: RadioOption::default(),
             vcs: RadioOption::default(),
             path: env::current_dir().unwrap(),
-            focus_index: 0,
+            focus_index: LoopNumber::new(CmakeField::iter().count()),
             error_messages: CmakeField::iter().map(|_| String::new()).collect(),
         }
     }
@@ -228,13 +228,13 @@ impl Inner for CmakeInner {
                 );
                 let focus_block = Block::new()
                     .borders(Borders::ALL)
-                    .border_style(if index == self.focus_index && focus_right_side {
+                    .border_style(if index == self.focus_index.value && focus_right_side {
                         Color::Red
                     } else {
                         Color::default()
                     })
                     .border_type(BorderType::Thick);
-                if focus_right_side && index == self.focus_index {
+                if focus_right_side && index == self.focus_index.value {
                     f.render_widget(
                         Paragraph::new(Self::tips()[index])
                             .style(Color::Blue)
@@ -290,19 +290,18 @@ impl Inner for CmakeInner {
     }
 
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
-        let field_len = CmakeField::iter().count();
-        let field = CmakeField::from_usize(self.focus_index).unwrap();
+        let field = CmakeField::from_usize(self.focus_index.value).unwrap();
         match key.code {
             KeyCode::Char(c) => {
                 if let Some(x) = self.get_focus_field_mut(field) {
                     x.push(c);
-                    self.error_messages[self.focus_index] = field.vaildate_string(x);
+                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
                 }
             }
             KeyCode::Backspace => {
                 if let Some(x) = self.get_focus_field_mut(field) {
                     x.pop();
-                    self.error_messages[self.focus_index] = field.vaildate_string(x);
+                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
                 }
             }
             KeyCode::Enter => {
@@ -311,10 +310,10 @@ impl Inner for CmakeInner {
                 }
             }
             KeyCode::Tab => {
-                self.focus_index = (self.focus_index + 1) % field_len;
+                self.focus_index = self.focus_index.next();
             }
             KeyCode::BackTab => {
-                self.focus_index = (self.focus_index + field_len - 1) % field_len;
+                self.focus_index = self.focus_index.prev();
             }
             KeyCode::Left => {
                 self.get_radio(field).map(RadioOptionTrait::prev);
