@@ -3,7 +3,7 @@ use super::{
     RadioOptionTrait, RadioOptionValue,
 };
 use crate::{
-    common::{Editor, Vcs},
+    common::{Editor, LoopNumber, Vcs},
     features::{RequestMethod, download_file, unzip},
 };
 use anyhow::Result;
@@ -11,11 +11,11 @@ use heck::ToSnakeCase;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup::LoopableNumberedEnum;
-use ratatui::style::Color;
 use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout, Rect},
+    style::Color,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
 use serde::{Deserialize, Serialize};
@@ -32,8 +32,6 @@ use strum_macros::{Display, EnumIter};
 struct SpringInitializrMetadata {
     #[serde(rename = "type")]
     metadata_type: Value,
-    #[serde(rename = "_links")]
-    links: Value,
     dependencies: Dependencies,
     #[serde(rename = "bootVersion")]
     boot_versions: BootVersions,
@@ -66,15 +64,8 @@ struct Dependency {
     id: String,
     name: String,
     description: String,
-    links: Option<Value>,
+    #[serde(rename = "versionRange")]
     version_range: Option<String>,
-    version_requirement: Option<String>,
-    weight: Option<i32>,
-    compatibility_range: Option<String>,
-    repository: Option<String>,
-    bom: Option<String>,
-    platform: Option<bool>,
-    starter: Option<bool>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct BootVersions {
@@ -246,7 +237,7 @@ pub(crate) struct SpringBootInner {
     vcs: RadioOption<Vcs>,
     dependencies: Vec<String>,
     path: PathBuf,
-    focus_index: usize,
+    focus_index: LoopNumber,
     error_messages: Vec<String>,
 }
 impl SpringBootInner {
@@ -263,7 +254,7 @@ impl SpringBootInner {
             vcs: RadioOption::default(),
             dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
-            focus_index: 0,
+            focus_index: LoopNumber::new(SpringBootField::iter().count()),
             error_messages: SpringBootField::iter().map(|_| String::new()).collect(),
         }
     }
@@ -392,13 +383,13 @@ impl Inner for SpringBootInner {
                 );
                 let focus_block = Block::new()
                     .borders(Borders::ALL)
-                    .border_style(if index == self.focus_index && focus_right_side {
+                    .border_style(if index == self.focus_index.value && focus_right_side {
                         Color::Red
                     } else {
                         Color::default()
                     })
                     .border_type(BorderType::Thick);
-                if focus_right_side && index == self.focus_index {
+                if focus_right_side && index == self.focus_index.value {
                     f.render_widget(
                         Paragraph::new(Self::tips()[index])
                             .style(Color::Blue)
@@ -454,19 +445,18 @@ impl Inner for SpringBootInner {
     }
 
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
-        let field_len = SpringBootField::iter().count();
-        let field = SpringBootField::from_usize(self.focus_index).unwrap();
+        let field = SpringBootField::from_usize(self.focus_index.value).unwrap();
         match key.code {
             KeyCode::Char(c) => {
                 if let Some(x) = self.get_focus_field_mut(field) {
                     x.push(c);
-                    self.error_messages[self.focus_index] = field.vaildate_string(x);
+                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
                 }
             }
             KeyCode::Backspace => {
                 if let Some(x) = self.get_focus_field_mut(field) {
                     x.pop();
-                    self.error_messages[self.focus_index] = field.vaildate_string(x);
+                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
                 }
             }
             KeyCode::Enter => {
@@ -475,10 +465,10 @@ impl Inner for SpringBootInner {
                 }
             }
             KeyCode::Tab => {
-                self.focus_index = (self.focus_index + 1) % field_len;
+                self.focus_index = self.focus_index.next();
             }
             KeyCode::BackTab => {
-                self.focus_index = (self.focus_index + field_len - 1) % field_len;
+                self.focus_index = self.focus_index.prev();
             }
             KeyCode::Left => {
                 self.get_radio(field).map(RadioOptionTrait::prev);
