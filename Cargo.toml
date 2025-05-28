@@ -56,7 +56,7 @@ strum = "0.27.1"
 strum_macros = "0.27.1"
 num-traits = "0.2.19"
 num-derive = "0.4.2"
-clap = { version = "4.5.38", features = ["derive"] }
+clap = { version = "4.5.39", features = ["derive"] }
 project_setup_derive = { path = "./project_setup_derive" }
 tui-big-text = "0.7.1"
 heck = "0.5.0"
