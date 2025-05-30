@@ -34,20 +34,20 @@ struct SpringInitializrMetadata {
     metadata_type: Value,
     dependencies: Dependencies,
     #[serde(rename = "bootVersion")]
-    boot_versions: BootVersions,
-    packaging: Packaging,
+    boot_versions: SelectableOption,
+    packaging: SelectableOption,
     #[serde(rename = "javaVersion")]
-    java_versions: JavaVersions,
-    language: Languages,
+    java_versions: SelectableOption,
+    language: SelectableOption,
     #[serde(rename = "groupId")]
-    group_id: GroupId,
+    group_id: TextOption,
     #[serde(rename = "artifactId")]
-    artifact_id: ArtifactId,
-    version: Version,
-    name: Name,
-    description: Description,
+    artifact_id: TextOption,
+    version: TextOption,
+    name: TextOption,
+    description: TextOption,
     #[serde(rename = "packageName")]
-    package_name: PackageName,
+    package_name: TextOption,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct Dependencies {
@@ -68,25 +68,7 @@ struct Dependency {
     version_range: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize)]
-struct BootVersions {
-    r#type: String,
-    default: String,
-    values: Vec<IdName>,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct Packaging {
-    r#type: String,
-    default: String,
-    values: Vec<IdName>,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct JavaVersions {
-    r#type: String,
-    default: String,
-    values: Vec<IdName>,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct Languages {
+struct SelectableOption {
     r#type: String,
     default: String,
     values: Vec<IdName>,
@@ -97,32 +79,7 @@ struct IdName {
     name: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
-struct GroupId {
-    r#type: String,
-    default: String,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct ArtifactId {
-    r#type: String,
-    default: String,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct Version {
-    r#type: String,
-    default: String,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct Name {
-    r#type: String,
-    default: String,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct Description {
-    r#type: String,
-    default: String,
-}
-#[derive(Debug, Serialize, Deserialize)]
-struct PackageName {
+struct TextOption {
     r#type: String,
     default: String,
 }
