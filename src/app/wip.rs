@@ -1,4 +1,4 @@
-use super::{Inner, InnerHandleKeyEventOutput};
+use super::{Inner, InnerHandleKeyEventOutput, PrepareInner};
 use ratatui::{
     crossterm::event::KeyEvent,
     layout::{Constraint, Direction, Layout},
@@ -6,11 +6,14 @@ use ratatui::{
 };
 use tui_big_text::{BigText, PixelSize};
 pub(crate) struct WipInner {}
-impl Inner for WipInner {
-    fn prepare(&self) -> anyhow::Result<()> {
-        Ok(())
-    }
+impl PrepareInner for WipInner {
+    async fn prepare(_tx: tokio::sync::mpsc::Sender<u16>) {}
 
+    fn is_prepared() -> bool {
+        true
+    }
+}
+impl Inner for WipInner {
     fn render(&mut self, f: &mut ratatui::Frame, _: bool, area: ratatui::prelude::Rect) {
         f.render_widget(
             BigText::builder()

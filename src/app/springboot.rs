@@ -1,6 +1,6 @@
 use super::{
-    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, RadioOption,
-    RadioOptionTrait, RadioOptionValue,
+    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, PrepareInner,
+    RadioOption, RadioOptionTrait, RadioOptionValue,
 };
 use crate::{
     common::{Editor, LoopNumber, Vcs},
@@ -25,9 +25,11 @@ use std::{
     fmt::{Debug, Display},
     fs,
     path::PathBuf,
+    sync::OnceLock,
 };
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
+use tokio::sync::mpsc;
 #[derive(Debug, Serialize, Deserialize)]
 struct SpringInitializrMetadata {
     #[serde(rename = "type")]
@@ -83,7 +85,7 @@ struct TextOption {
     r#type: String,
     default: String,
 }
-static mut METADATA: Option<SpringInitializrMetadata> = None;
+static METADATA: OnceLock<SpringInitializrMetadata> = OnceLock::new();
 #[derive(Display, Clone, Copy, FromPrimitive, EnumIter)]
 enum SpringBootField {
     Name,
@@ -287,24 +289,30 @@ impl InnerTipLabel for SpringBootInner {
         ]
     }
 }
-impl Inner for SpringBootInner {
-    fn prepare(&self) -> Result<()> {
+impl PrepareInner for SpringBootInner {
+    async fn prepare(tx: mpsc::Sender<u16>) {
         let metadata_file = env::temp_dir().join("springboot_metadata.json");
+        tx.send(25).await.unwrap();
         if !metadata_file.exists() {
-            download_file(
+            let _ = download_file(
                 "https://start.spring.io/metadata/client",
                 &RequestMethod::GET,
                 &[],
                 &metadata_file,
-            )?;
+            );
         }
-        let data = fs::read_to_string(metadata_file)?;
-        unsafe {
-            METADATA = Some(serde_json::from_str(&data)?);
-        }
-        Ok(())
+        tx.send(50).await.unwrap();
+        let data = fs::read_to_string(metadata_file).unwrap();
+        tx.send(75).await.unwrap();
+        let _ = METADATA.set(serde_json::from_str(&data).unwrap());
+        tx.send(100).await.unwrap();
     }
 
+    fn is_prepared() -> bool {
+        METADATA.get().is_some()
+    }
+}
+impl Inner for SpringBootInner {
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect) {
         let labels = Self::labels();
         // 表单布局 - 垂直排列输入框

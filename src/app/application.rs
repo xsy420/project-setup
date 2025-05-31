@@ -1,4 +1,4 @@
-use super::{CmakeInner, Inner, SpringBootInner, WipInner};
+use super::{CmakeInner, Inner, SpringBootInner, WipInner, inner::PrepareInner};
 use crate::{Args, common::ProjectType};
 use anyhow::Result;
 use ratatui::{
@@ -7,9 +7,10 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
     prelude::*,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListState, Paragraph},
+    widgets::{Block, Borders, Gauge, List, ListState, Paragraph},
 };
 use strum::IntoEnumIterator;
+use tokio::sync::mpsc;
 pub(crate) struct Application {
     selected: ProjectType,
     focus_left_side: bool,
@@ -110,14 +111,46 @@ impl Application {
         }
     }
 
-    pub(crate) fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<()> {
-        if let Some(i) = self.default_inner {
-            self.inners[i.num()].prepare()?;
-        } else {
-            for i in &self.inners {
-                i.prepare()?;
-            }
+    fn prepare_inner<B: Backend, F: Fn() -> bool, P>(
+        terminal: &mut Terminal<B>,
+        is_prepared: F,
+        prepare: P,
+    ) -> Result<()>
+    where
+        P: FnOnce(
+                mpsc::Sender<u16>,
+            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>>
+            + Send
+            + 'static,
+    {
+        let (tx, mut rx) = mpsc::channel(100);
+        tokio::spawn(async move {
+            prepare(tx).await;
+        });
+        let mut progress = 0;
+        while !is_prepared() {
+            terminal.draw(|f| {
+                let gauge = Gauge::default()
+                    .block(Block::default().title("下载进度").borders(Borders::ALL))
+                    .gauge_style(Style::default().fg(Color::Yellow))
+                    .percent(progress);
+                f.render_widget(gauge, f.area());
+                // 检查通道中的进度更新
+                if let Ok(new_progress) = rx.try_recv() {
+                    progress = new_progress;
+                }
+            })?;
         }
+        Ok(())
+    }
+
+    pub(crate) fn prepare_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<()> {
+        Self::prepare_inner(terminal, SpringBootInner::is_prepared, |tx| {
+            Box::pin(SpringBootInner::prepare(tx))
+        })
+    }
+
+    pub(crate) fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<()> {
         loop {
             terminal.draw(|f| self.ui(f))?;
             // 处理输入事件
