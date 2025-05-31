@@ -15,7 +15,8 @@ use ratatui::{
     prelude::*,
 };
 use std::io::{self};
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let args = Args::parse();
     // 设置终端
     enable_raw_mode()?;
@@ -23,6 +24,7 @@ fn main() -> Result<()> {
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+    Application::prepare_app(&mut terminal)?;
     // 创建应用
     let app = Application::new(args);
     let res = app.run(&mut terminal);

@@ -1,6 +1,6 @@
 use super::{
-    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, RadioOption,
-    RadioOptionTrait, RadioOptionValue,
+    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, PrepareInner,
+    RadioOption, RadioOptionTrait, RadioOptionValue,
 };
 use crate::common::{Editor, LoopNumber, Vcs};
 use anyhow::Result;
@@ -188,11 +188,14 @@ impl InnerTipLabel for CmakeInner {
         ]
     }
 }
-impl Inner for CmakeInner {
-    fn prepare(&self) -> Result<()> {
-        Ok(())
-    }
+impl PrepareInner for CmakeInner {
+    async fn prepare(_tx: tokio::sync::mpsc::Sender<u16>) {}
 
+    fn is_prepared() -> bool {
+        true
+    }
+}
+impl Inner for CmakeInner {
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect) {
         let labels = Self::labels();
         // 表单布局 - 垂直排列输入框
