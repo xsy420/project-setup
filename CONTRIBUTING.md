@@ -25,7 +25,7 @@ To ensure the successful execution of the tests, it is essential to fetch the ta
 git fetch --tags https://github.com/xsy420/project-setup
 ```
 
-3. Make sure that you have [Rust](https://www.rust-lang.org/) `1.86.0` or later installed and build the project.
+3. Make sure that you have [Rust](https://www.rust-lang.org/) `1.87.0` or later installed and build the project.
 
 ```sh
 cargo build
