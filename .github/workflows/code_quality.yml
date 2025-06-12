@@ -10,18 +10,5 @@ on:
     branches: [ "main" ]
 
 jobs:
-  editorconfig-check:
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-    - name: Run EditorConfig Checker
-      uses: editorconfig-checker/action-editorconfig-checker@main
-    - run: editorconfig-checker
-  typos:
-    name: Typos
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Check typos
-        uses: crate-ci/typos@master
+  code_quality:
+    uses: xsy420/meta/.github/workflows/code_quality.yml@main
