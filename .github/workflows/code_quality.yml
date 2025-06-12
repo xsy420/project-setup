@@ -7,4 +7,4 @@ on: [push, pull_request]
 
 jobs:
   code_quality:
-    uses: xsy420/meta/code_quality/code_quality.yml@main
+    uses: xsy420/meta/.github/workflows/code_quality.yml@main

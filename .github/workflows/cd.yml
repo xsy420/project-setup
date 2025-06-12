@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   cd:
-    uses: xsy420/meta/rust/cd.yml@main
+    uses: xsy420/meta/.github/workflows/cd.yml@main

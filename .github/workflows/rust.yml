@@ -8,4 +8,4 @@ on: [push, pull_request]
 
 jobs:
   rust:
-    uses: xsy420/meta/rust/rust.yml@main
+    uses: xsy420/meta/.github/workflows/rust.yml@main
