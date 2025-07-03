@@ -1,12 +1,13 @@
 use super::{
     Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, PrepareInner,
-    RadioOption, RadioOptionTrait, RadioOptionValue,
+    RadioOption, RadioOptionTrait,
 };
 use crate::common::{Editor, LoopNumber, Vcs};
 use anyhow::Result;
 use heck::ToSnakeCase;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
+use project_setup_derive::RadioOption;
 use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent},
@@ -35,7 +36,7 @@ impl InnerField for CargoField {
         String::new()
     }
 }
-#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum ProjectType {
     #[default]
     Executable,
@@ -56,12 +57,7 @@ impl ProjectType {
         }
     }
 }
-impl RadioOptionValue for ProjectType {
-    fn selectable(&self) -> bool {
-        true
-    }
-}
-#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum Edition {
     #[strum(to_string = "2015")]
     Fifteen,
@@ -72,11 +68,6 @@ enum Edition {
     #[default]
     #[strum(to_string = "2024")]
     TwentyFour,
-}
-impl RadioOptionValue for Edition {
-    fn selectable(&self) -> bool {
-        true
-    }
 }
 pub(crate) struct CargoInner {
     name: String,
