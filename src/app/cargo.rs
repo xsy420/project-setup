@@ -15,13 +15,7 @@ use ratatui::{
     style::Color,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
-use std::{
-    env,
-    fmt::{Debug, Display},
-    fs,
-    path::PathBuf,
-    process::Command,
-};
+use std::{env, fmt::Debug, fs, path::PathBuf, process::Command};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 #[derive(Clone, Copy, Display, EnumIter, FromPrimitive)]
@@ -67,24 +61,17 @@ impl RadioOptionValue for ProjectType {
         true
     }
 }
-#[derive(Clone, Copy, Debug, Default, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
 enum Edition {
+    #[strum(to_string = "2015")]
     Fifteen,
+    #[strum(to_string = "2018")]
     Eighteen,
+    #[strum(to_string = "2021")]
     TwentyOne,
     #[default]
+    #[strum(to_string = "2024")]
     TwentyFour,
-}
-impl Display for Edition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(match self {
-            Self::Fifteen => "2015",
-            Self::Eighteen => "2018",
-            Self::TwentyOne => "2021",
-            Self::TwentyFour => "2024",
-        })
-        .finish()
-    }
 }
 impl RadioOptionValue for Edition {
     fn selectable(&self) -> bool {
