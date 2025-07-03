@@ -1,11 +1,13 @@
 pub mod app {
     pub mod application;
-    pub(super) mod cmake;
-    pub(super) mod inner;
-    pub(super) mod radio_option;
-    pub(super) mod springboot;
-    pub(super) mod wip;
+    mod cargo;
+    mod cmake;
+    mod inner;
+    mod radio_option;
+    mod springboot;
+    mod wip;
     pub use application::Application;
+    use cargo::CargoInner;
     use cmake::CmakeInner;
     use inner::{
         Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel,
