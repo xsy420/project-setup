@@ -1,9 +1,10 @@
 use super::{
-    CmakeInner, SpringBootInner, WipInner,
+    CargoInner, CmakeInner, SpringBootInner, WipInner,
     inner::{Inner, PrepareInner},
 };
 use crate::{Args, common::ProjectType};
 use anyhow::Result;
+use clap::Parser;
 use ratatui::{
     Frame, Terminal,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
@@ -27,7 +28,7 @@ impl Application {
             Box::new(SpringBootInner::new()),
             Box::new(CmakeInner::new()),
             Box::new(WipInner {}),
-            Box::new(WipInner {}),
+            Box::new(CargoInner::new()),
         ];
         Self {
             selected: ProjectType::default(),
@@ -117,6 +118,7 @@ impl Application {
 
     fn prepare_inner<B: Backend, F: Fn() -> bool, P>(
         terminal: &mut Terminal<B>,
+        pt: ProjectType,
         is_prepared: F,
         prepare: P,
     ) -> Result<()>
@@ -127,6 +129,11 @@ impl Application {
             + Send
             + 'static,
     {
+        if let Some(p) = Args::parse().project_type
+            && p != pt
+        {
+            return Ok(());
+        }
         let (tx, mut rx) = mpsc::channel(100);
         tokio::spawn(async move {
             prepare(tx).await;
@@ -150,9 +157,12 @@ impl Application {
 
     /// # Errors
     pub fn prepare_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<()> {
-        Self::prepare_inner(terminal, SpringBootInner::is_prepared, |tx| {
-            Box::pin(SpringBootInner::prepare(tx))
-        })
+        Self::prepare_inner(
+            terminal,
+            ProjectType::SpringBoot,
+            SpringBootInner::is_prepared,
+            |tx| Box::pin(SpringBootInner::prepare(tx)),
+        )
     }
 
     /// # Errors
