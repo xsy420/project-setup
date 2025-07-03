@@ -1,8 +1,11 @@
 use super::{
     Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, PrepareInner,
-    RadioOption, RadioOptionTrait, RadioOptionValue,
+    RadioOption, RadioOptionTrait,
 };
-use crate::common::{Editor, LoopNumber, Vcs};
+use crate::{
+    RadioOption,
+    common::{Editor, LoopNumber, Vcs},
+};
 use anyhow::Result;
 use heck::ToSnakeCase;
 use num_derive::FromPrimitive;
@@ -37,18 +40,13 @@ impl InnerField for CmakeField {
         String::new()
     }
 }
-#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum ProjectType {
     #[default]
     Executable,
     Library,
 }
-impl RadioOptionValue for ProjectType {
-    fn selectable(&self) -> bool {
-        true
-    }
-}
-#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum Language {
     #[default]
     C,
@@ -93,11 +91,6 @@ impl Language {
             }
         }
         .to_string()
-    }
-}
-impl RadioOptionValue for Language {
-    fn selectable(&self) -> bool {
-        true
     }
 }
 pub(crate) struct CmakeInner {

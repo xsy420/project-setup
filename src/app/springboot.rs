@@ -1,9 +1,9 @@
 use super::{
     Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, PrepareInner,
-    RadioOption, RadioOptionTrait, RadioOptionValue,
+    RadioOption, RadioOptionTrait,
 };
 use crate::{
-    LoopableNumberedEnum,
+    LoopableNumberedEnum, RadioOption,
     common::{Editor, LoopNumber, Vcs},
     features::{RequestMethod, download_file, unzip},
 };
@@ -122,6 +122,7 @@ impl InnerField for SpringBootField {
     LoopableNumberedEnum,
     EnumIter,
     PartialEq,
+    RadioOption,
 )]
 #[numbered_enum(loop_within = 2)]
 enum Generator {
@@ -129,12 +130,7 @@ enum Generator {
     Maven,
     Gradle,
 }
-impl RadioOptionValue for Generator {
-    fn selectable(&self) -> bool {
-        true
-    }
-}
-#[derive(Clone, Copy, Default, Display, Debug, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Default, Display, Debug, EnumIter, PartialEq, RadioOption)]
 enum Language {
     #[default]
     Java,
@@ -149,12 +145,7 @@ impl Language {
         .to_string()
     }
 }
-impl RadioOptionValue for Language {
-    fn selectable(&self) -> bool {
-        true
-    }
-}
-#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum JavaVersion {
     #[strum(to_string = "23")]
     TwentyThree,
@@ -165,11 +156,6 @@ enum JavaVersion {
     Seventeen,
     #[strum(to_string = "8")]
     Eight,
-}
-impl RadioOptionValue for JavaVersion {
-    fn selectable(&self) -> bool {
-        true
-    }
 }
 pub(crate) struct SpringBootInner {
     name: String,

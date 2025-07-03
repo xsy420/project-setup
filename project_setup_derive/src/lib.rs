@@ -39,3 +39,14 @@ pub fn numbered_enum_derive(input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+#[proc_macro_derive(RadioOption)]
+pub fn radio_option_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+    let expanded = quote! {
+    impl super::RadioOptionValue for #name {
+        fn selectable(&self) -> bool {true}
+    }
+    };
+    TokenStream::from(expanded)
+}
