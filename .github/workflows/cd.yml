@@ -12,3 +12,12 @@ permissions:
 jobs:
   cd:
     uses: xsy420/meta/.github/workflows/cd.yml@main
+    with:
+      repository_name: 'project-setup'
+      mangen: true
+      mangen_bin_name: 'project-setup-mangen'
+      completions: true
+      completions_bin_name: 'project-setup-completions'
+    secrets:
+      GPG_RELEASE_KEY: ${{ secrets.GPG_RELEASE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

@@ -4,13 +4,21 @@ version = "0.1.0"
 edition = "2024"
 authors = ["xsy420 <xsy0420@gmail.com>"]
 license = "Apache-2.0"
-
+default-run = "project-setup"
 description = "A TUI to help you setup a project easily."
 
 homepage = "https://github.com/xsy420/project-setup"
 repository = "https://github.com/xsy420/project-setup"
 readme = "README.md"
-rust-version = "1.87.0"
+rust-version = "1.88.0"
+
+[[bin]]
+name = "project-setup-completions"
+path = "src/bin/completions.rs"
+
+[[bin]]
+name = "project-setup-mangen"
+path = "src/bin/mangen.rs"
 
 [package.metadata.deb]
 assets = [
@@ -29,12 +37,37 @@ assets = [
     "/usr/share/licenses/project-setup/README.md",
     "644",
   ],
+  [
+    "man/project-setup.1",
+    "/usr/share/man/man1/project-setup.1",
+    "644",
+  ],
+  [
+    "completions/project-setup.bash",
+    "/usr/share/bash-completion/completions/project-setup",
+    "644",
+  ],
+  [
+    "completions/project-setup.fish",
+    "/usr/share/fish/vendor_completions.d/project-setup.fish",
+    "644",
+  ],
+  [
+    "completions/_project-setup",
+    "/usr/share/zsh/site-completions/",
+    "644",
+  ],
 ]
+depends = ["libgcc-s1 (>= 3.0)"]
 [package.metadata.generate-rpm]
 assets = [
   { source = "target/release/project-setup", dest = "/usr/bin/project-setup", mode = "755" },
   { source = "LICENSE", dest = "/usr/share/licenses/project-setup/LICENSE", mode = "644" },
   { source = "README.md", dest = "/usr/share/doc/project-setup/README.md", mode = "644" },
+  { source = "man/project-setup.1", dest = "/usr/share/man/man1/auth.1", mode = "644", doc = true },
+  { source = "completions/project-setup.bash", dest = "/usr/share/bash-completion/completions/project-setup", mode = "644" },
+  { source = "completions/project-setup.fish", dest = "/usr/share/fish/vendor_completions.d/project-setup.fish", mode = "644" },
+  { source = "completions/_project-setup", dest = "/usr/share/zsh/site-completions/", mode = "644" },
 ]
 [profile.release]
 strip = true
@@ -57,6 +90,8 @@ strum_macros = "0.27.1"
 num-traits = "0.2.19"
 num-derive = "0.4.2"
 clap = { version = "4.5.40", features = ["derive"] }
+clap_complete = "4.5.54"
+clap_mangen = "0.2.27"
 project_setup_derive = { path = "./project_setup_derive" }
 tui-big-text = "0.7.1"
 heck = "0.5.0"

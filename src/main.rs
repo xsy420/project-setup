@@ -1,11 +1,6 @@
-mod app;
-mod args;
-mod common;
-mod features;
 use anyhow::Result;
-use app::Application;
-use args::Args;
 use clap::Parser;
+use project_setup::{app::Application, args::Args};
 use ratatui::{
     Terminal,
     crossterm::{
