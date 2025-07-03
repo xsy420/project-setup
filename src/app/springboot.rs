@@ -3,6 +3,7 @@ use super::{
     RadioOption, RadioOptionTrait, RadioOptionValue,
 };
 use crate::{
+    LoopableNumberedEnum,
     common::{Editor, LoopNumber, Vcs},
     features::{RequestMethod, download_file, unzip},
 };
@@ -10,7 +11,6 @@ use anyhow::Result;
 use heck::ToSnakeCase;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use project_setup::LoopableNumberedEnum;
 use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent},

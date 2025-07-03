@@ -1,4 +1,7 @@
-use super::{CmakeInner, Inner, SpringBootInner, WipInner, inner::PrepareInner};
+use super::{
+    CmakeInner, SpringBootInner, WipInner,
+    inner::{Inner, PrepareInner},
+};
 use crate::{Args, common::ProjectType};
 use anyhow::Result;
 use ratatui::{
@@ -11,14 +14,15 @@ use ratatui::{
 };
 use strum::IntoEnumIterator;
 use tokio::sync::mpsc;
-pub(crate) struct Application {
+pub struct Application {
     selected: ProjectType,
     focus_left_side: bool,
     inners: Vec<Box<dyn Inner>>,
     default_inner: Option<ProjectType>,
 }
 impl Application {
-    pub(crate) fn new(args: Args) -> Self {
+    #[must_use]
+    pub fn new(args: Args) -> Self {
         let inners: Vec<Box<dyn Inner>> = vec![
             Box::new(SpringBootInner::new()),
             Box::new(CmakeInner::new()),
@@ -144,13 +148,16 @@ impl Application {
         Ok(())
     }
 
-    pub(crate) fn prepare_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<()> {
+    /// # Errors
+    pub fn prepare_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<()> {
         Self::prepare_inner(terminal, SpringBootInner::is_prepared, |tx| {
             Box::pin(SpringBootInner::prepare(tx))
         })
     }
 
-    pub(crate) fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<()> {
+    /// # Errors
+    /// # Panics
+    pub fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<()> {
         loop {
             terminal.draw(|f| self.ui(f))?;
             // 处理输入事件
