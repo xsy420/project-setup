@@ -20,13 +20,7 @@ use ratatui::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{
-    env,
-    fmt::{Debug, Display},
-    fs,
-    path::PathBuf,
-    sync::OnceLock,
-};
+use std::{env, fmt::Debug, fs, path::PathBuf, sync::OnceLock};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 use tokio::sync::mpsc;
@@ -160,24 +154,17 @@ impl RadioOptionValue for Language {
         true
     }
 }
-#[derive(Clone, Copy, Default, Debug, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq)]
 enum JavaVersion {
+    #[strum(to_string = "23")]
     TwentyThree,
+    #[strum(to_string = "21")]
     TwentyOne,
     #[default]
+    #[strum(to_string = "17")]
     Seventeen,
+    #[strum(to_string = "8")]
     Eight,
-}
-impl Display for JavaVersion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(match self {
-            Self::TwentyThree => "23",
-            Self::TwentyOne => "21",
-            Self::Seventeen => "17",
-            Self::Eight => "8",
-        })
-        .finish()
-    }
 }
 impl RadioOptionValue for JavaVersion {
     fn selectable(&self) -> bool {
