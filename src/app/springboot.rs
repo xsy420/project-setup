@@ -80,7 +80,7 @@ struct TextOption {
     default: String,
 }
 static METADATA: OnceLock<SpringInitializrMetadata> = OnceLock::new();
-#[derive(Display, Clone, Copy, FromPrimitive, EnumIter)]
+#[derive(Display, Clone, Copy, FromPrimitive, EnumIter, ToPrimitive)]
 enum SpringBootField {
     Name,
     Generator,
@@ -398,6 +398,11 @@ impl Inner for SpringBootInner {
                 }
             }
             KeyCode::Enter => {
+                SpringBootField::iter().for_each(|field| {
+                    if let Some(x) = self.get_focus_field_mut(field) {
+                        self.error_messages[field.to_usize().unwrap()] = field.vaildate_string(x);
+                    }
+                });
                 if self.error_messages.iter().all(String::is_empty) {
                     return InnerHandleKeyEventOutput::default().with_exited();
                 }

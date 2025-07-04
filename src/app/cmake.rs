@@ -8,8 +8,8 @@ use crate::{
 };
 use anyhow::Result;
 use heck::ToSnakeCase;
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
 use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent},
@@ -21,7 +21,7 @@ use ratatui::{
 use std::{env, fmt::Debug, fs, path::PathBuf};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
-#[derive(Clone, Copy, Display, EnumIter, FromPrimitive)]
+#[derive(Clone, Copy, Display, EnumIter, FromPrimitive, ToPrimitive)]
 enum CmakeField {
     Name,
     ProjectVersion,
@@ -301,6 +301,11 @@ impl Inner for CmakeInner {
                 }
             }
             KeyCode::Enter => {
+                CmakeField::iter().for_each(|field| {
+                    if let Some(x) = self.get_focus_field_mut(field) {
+                        self.error_messages[field.to_usize().unwrap()] = field.vaildate_string(x);
+                    }
+                });
                 if self.error_messages.iter().all(String::is_empty) {
                     return InnerHandleKeyEventOutput::default().with_exited();
                 }
