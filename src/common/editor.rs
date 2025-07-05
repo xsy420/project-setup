@@ -1,7 +1,8 @@
-use crate::{LoopableNumberedEnum, app::RadioOptionValue};
+use crate::app::RadioOptionValue;
 use anyhow::Result;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
+use project_setup_derive::LoopableNumberedEnum;
 use std::{
     io::Error,
     path::PathBuf,

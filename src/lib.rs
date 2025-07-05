@@ -10,8 +10,8 @@ pub mod app {
     use cargo::CargoInner;
     use cmake::CmakeInner;
     use inner::{
-        Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel,
-        PrepareInner,
+        Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
+        InnerState, InnerTipLabel, PrepareInner, handle_inner_keyevent,
     };
     pub(crate) use radio_option::RadioOptionValue;
     use radio_option::{RadioOption, RadioOptionTrait};
@@ -38,7 +38,7 @@ pub(crate) mod features {
 }
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-pub use project_setup_derive::{LoopableNumberedEnum, RadioOption};
+use project_setup_derive::{InnerState, LoopableNumberedEnum, RadioOption};
 pub trait LoopableNumberedEnum {
     fn num(&self) -> usize;
     fn next_index(&self) -> usize;

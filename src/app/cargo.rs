@@ -1,23 +1,24 @@
 use super::{
-    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, PrepareInner,
-    RadioOption, RadioOptionTrait,
+    Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
+    InnerTipLabel, PrepareInner, RadioOption, handle_inner_keyevent,
 };
-use crate::common::{Editor, LoopNumber, Vcs};
+use crate::{
+    InnerState, RadioOption,
+    common::{Editor, Vcs},
+};
 use anyhow::Result;
 use heck::ToSnakeCase;
 use num_derive::{FromPrimitive, ToPrimitive};
-use num_traits::{FromPrimitive, ToPrimitive};
-use project_setup_derive::RadioOption;
+use num_traits::FromPrimitive;
 use ratatui::{
     Frame,
-    crossterm::event::{KeyCode, KeyEvent},
+    crossterm::event::KeyEvent,
     layout::{Constraint, Direction, Layout},
     prelude::Rect,
     style::Color,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
 use std::{env, fmt::Debug, fs, path::PathBuf, process::Command};
-use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 #[derive(Clone, Copy, Display, EnumIter, FromPrimitive, ToPrimitive)]
 enum CargoField {
@@ -69,18 +70,18 @@ enum Edition {
     #[strum(to_string = "2024")]
     TwentyFour,
 }
-pub(crate) struct CargoInner {
+#[derive(InnerState, Clone)]
+pub(super) struct CargoInner {
     name: String,
     project_type: RadioOption<ProjectType>,
     edition: RadioOption<Edition>,
     editor: RadioOption<Editor>,
     vcs: RadioOption<Vcs>,
     path: PathBuf,
-    focus_index: LoopNumber,
-    error_messages: Vec<String>,
+    common_state: InnerCommonState,
 }
 impl CargoInner {
-    pub(crate) fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self {
             name: String::new(),
             project_type: RadioOption::default(),
@@ -88,8 +89,7 @@ impl CargoInner {
             editor: RadioOption::default(),
             vcs: RadioOption::default(),
             path: env::current_dir().unwrap(),
-            focus_index: LoopNumber::new(CargoField::iter().count()),
-            error_messages: CargoField::iter().map(|_| String::new()).collect(),
+            common_state: InnerCommonState::new::<CargoField>(),
         }
     }
 }
@@ -181,13 +181,15 @@ impl Inner for CargoInner {
                 );
                 let focus_block = Block::new()
                     .borders(Borders::ALL)
-                    .border_style(if index == self.focus_index.value && focus_right_side {
-                        Color::Red
-                    } else {
-                        Color::default()
-                    })
+                    .border_style(
+                        if index == self.common_state.focus_index.value && focus_right_side {
+                            Color::Red
+                        } else {
+                            Color::default()
+                        },
+                    )
                     .border_type(BorderType::Thick);
-                if focus_right_side && index == self.focus_index.value {
+                if focus_right_side && index == self.common_state.focus_index.value {
                     f.render_widget(
                         Paragraph::new(Self::tips()[index])
                             .style(Color::Blue)
@@ -227,9 +229,10 @@ impl Inner for CargoInner {
                     .block(focus_block),
                     split_tip_input_error_layout.split(label_input_area[1])[1],
                 );
-                if !self.error_messages[index].is_empty() {
+                if !self.common_state.error_messages[index].is_empty() {
                     f.render_widget(
-                        Paragraph::new(self.error_messages[index].clone()).style(Color::Red),
+                        Paragraph::new(self.common_state.error_messages[index].clone())
+                            .style(Color::Red),
                         split_tip_input_error_layout.split(label_input_area[1])[2],
                     );
                 }
@@ -243,45 +246,7 @@ impl Inner for CargoInner {
     }
 
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
-        let field = CargoField::from_usize(self.focus_index.value).unwrap();
-        match key.code {
-            KeyCode::Char(c) => {
-                if let Some(x) = self.get_focus_field_mut(field) {
-                    x.push(c);
-                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
-                }
-            }
-            KeyCode::Backspace => {
-                if let Some(x) = self.get_focus_field_mut(field) {
-                    x.pop();
-                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
-                }
-            }
-            KeyCode::Enter => {
-                CargoField::iter().for_each(|field| {
-                    if let Some(x) = self.get_focus_field_mut(field) {
-                        self.error_messages[field.to_usize().unwrap()] = field.vaildate_string(x);
-                    }
-                });
-                if self.error_messages.iter().all(String::is_empty) {
-                    return InnerHandleKeyEventOutput::default().with_exited();
-                }
-            }
-            KeyCode::Tab => {
-                self.focus_index = self.focus_index.next();
-            }
-            KeyCode::BackTab => {
-                self.focus_index = self.focus_index.prev();
-            }
-            KeyCode::Left => {
-                self.get_radio(field).map(RadioOptionTrait::prev);
-            }
-            KeyCode::Right => {
-                self.get_radio(field).map(RadioOptionTrait::next);
-            }
-            _ => {}
-        }
-        InnerHandleKeyEventOutput::default()
+        handle_inner_keyevent(self, key)
     }
 
     fn create_and_edit(&self) -> Result<()> {

@@ -50,3 +50,21 @@ pub fn radio_option_derive(input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+#[proc_macro_derive(InnerState)]
+pub fn inner_state_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+    let expanded = quote! {
+    impl super::InnerState for #name {
+        fn state(self) -> InnerCommonState {
+            self.common_state
+        }
+
+        fn with_state(&mut self, state: InnerCommonState) -> &mut Self {
+            self.common_state = state;
+            self
+        }
+    }
+        };
+    TokenStream::from(expanded)
+}
