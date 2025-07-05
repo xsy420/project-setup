@@ -1,10 +1,10 @@
 use super::{
-    Inner, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput, InnerTipLabel, PrepareInner,
-    RadioOption, RadioOptionTrait,
+    Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
+    InnerTipLabel, PrepareInner, RadioOption, RadioOptionTrait, handle_inner_keyevent,
 };
 use crate::{
-    LoopableNumberedEnum, RadioOption,
-    common::{Editor, LoopNumber, Vcs},
+    InnerState, LoopableNumberedEnum, RadioOption,
+    common::{Editor, Vcs},
     features::{RequestMethod, download_file, unzip},
 };
 use anyhow::Result;
@@ -13,7 +13,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use ratatui::{
     Frame,
-    crossterm::event::{KeyCode, KeyEvent},
+    crossterm::event::KeyEvent,
     layout::{Constraint, Direction, Layout, Rect},
     style::Color,
     widgets::{Block, BorderType, Borders, Paragraph},
@@ -21,7 +21,6 @@ use ratatui::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{env, fmt::Debug, fs, path::PathBuf, sync::OnceLock};
-use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 use tokio::sync::mpsc;
 #[derive(Debug, Serialize, Deserialize)]
@@ -157,6 +156,7 @@ enum JavaVersion {
     #[strum(to_string = "8")]
     Eight,
 }
+#[derive(Clone, InnerState)]
 pub(crate) struct SpringBootInner {
     name: String,
     generator: RadioOption<Generator>,
@@ -169,8 +169,7 @@ pub(crate) struct SpringBootInner {
     vcs: RadioOption<Vcs>,
     dependencies: Vec<String>,
     path: PathBuf,
-    focus_index: LoopNumber,
-    error_messages: Vec<String>,
+    common_state: InnerCommonState,
 }
 impl SpringBootInner {
     pub(crate) fn new() -> Self {
@@ -186,8 +185,7 @@ impl SpringBootInner {
             vcs: RadioOption::default(),
             dependencies: vec![String::new()],
             path: env::current_dir().unwrap(),
-            focus_index: LoopNumber::new(SpringBootField::iter().count()),
-            error_messages: SpringBootField::iter().map(|_| String::new()).collect(),
+            common_state: InnerCommonState::new::<SpringBootField>(),
         }
     }
 }
@@ -321,13 +319,15 @@ impl Inner for SpringBootInner {
                 );
                 let focus_block = Block::new()
                     .borders(Borders::ALL)
-                    .border_style(if index == self.focus_index.value && focus_right_side {
-                        Color::Red
-                    } else {
-                        Color::default()
-                    })
+                    .border_style(
+                        if index == self.common_state.focus_index.value && focus_right_side {
+                            Color::Red
+                        } else {
+                            Color::default()
+                        },
+                    )
                     .border_type(BorderType::Thick);
-                if focus_right_side && index == self.focus_index.value {
+                if focus_right_side && index == self.common_state.focus_index.value {
                     f.render_widget(
                         Paragraph::new(Self::tips()[index])
                             .style(Color::Blue)
@@ -367,9 +367,10 @@ impl Inner for SpringBootInner {
                     .block(focus_block),
                     split_tip_input_error_layout.split(label_input_area[1])[1],
                 );
-                if !self.error_messages[index].is_empty() {
+                if !self.common_state.error_messages[index].is_empty() {
                     f.render_widget(
-                        Paragraph::new(self.error_messages[index].clone()).style(Color::Red),
+                        Paragraph::new(self.common_state.error_messages[index].clone())
+                            .style(Color::Red),
                         split_tip_input_error_layout.split(label_input_area[1])[2],
                     );
                 }
@@ -383,45 +384,7 @@ impl Inner for SpringBootInner {
     }
 
     fn handle_keyevent(&mut self, key: KeyEvent) -> InnerHandleKeyEventOutput {
-        let field = SpringBootField::from_usize(self.focus_index.value).unwrap();
-        match key.code {
-            KeyCode::Char(c) => {
-                if let Some(x) = self.get_focus_field_mut(field) {
-                    x.push(c);
-                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
-                }
-            }
-            KeyCode::Backspace => {
-                if let Some(x) = self.get_focus_field_mut(field) {
-                    x.pop();
-                    self.error_messages[self.focus_index.value] = field.vaildate_string(x);
-                }
-            }
-            KeyCode::Enter => {
-                SpringBootField::iter().for_each(|field| {
-                    if let Some(x) = self.get_focus_field_mut(field) {
-                        self.error_messages[field.to_usize().unwrap()] = field.vaildate_string(x);
-                    }
-                });
-                if self.error_messages.iter().all(String::is_empty) {
-                    return InnerHandleKeyEventOutput::default().with_exited();
-                }
-            }
-            KeyCode::Tab => {
-                self.focus_index = self.focus_index.next();
-            }
-            KeyCode::BackTab => {
-                self.focus_index = self.focus_index.prev();
-            }
-            KeyCode::Left => {
-                self.get_radio(field).map(RadioOptionTrait::prev);
-            }
-            KeyCode::Right => {
-                self.get_radio(field).map(RadioOptionTrait::next);
-            }
-            _ => {}
-        }
-        InnerHandleKeyEventOutput::default()
+        handle_inner_keyevent(self, key)
     }
 
     fn create_and_edit(&self) -> Result<()> {
