@@ -3,7 +3,7 @@ use super::{
     InnerTipLabel, PrepareInner, RadioOption, RadioOptionTrait, handle_inner_keyevent,
 };
 use crate::{
-    InnerState, LoopableNumberedEnum, RadioOption,
+    EnumFunc, InnerState, LoopableNumberedEnum, RadioOption,
     common::{Editor, Vcs},
     features::{RequestMethod, download_file, unzip},
 };
@@ -129,20 +129,13 @@ enum Generator {
     Maven,
     Gradle,
 }
-#[derive(Clone, Copy, Default, Display, Debug, EnumIter, PartialEq, RadioOption)]
+#[derive(Clone, Copy, Default, Display, Debug, EnumIter, PartialEq, RadioOption, EnumFunc)]
 enum Language {
     #[default]
+    #[enum_func(extension("java"))]
     Java,
+    #[enum_func(extension("kt"))]
     Kotlin,
-}
-impl Language {
-    fn extension(self) -> String {
-        match self {
-            Self::Java => "java",
-            Self::Kotlin => "kt",
-        }
-        .to_string()
-    }
 }
 #[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum JavaVersion {

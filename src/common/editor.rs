@@ -2,7 +2,7 @@ use crate::app::RadioOptionValue;
 use anyhow::Result;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use project_setup_derive::LoopableNumberedEnum;
+use project_setup_derive::{EnumFunc, LoopableNumberedEnum};
 use std::{
     io::Error,
     path::PathBuf,
@@ -14,6 +14,7 @@ use strum_macros::{Display, EnumIter};
     Debug,
     Default,
     LoopableNumberedEnum,
+    EnumFunc,
     FromPrimitive,
     ToPrimitive,
     Clone,
@@ -24,12 +25,19 @@ use strum_macros::{Display, EnumIter};
 #[numbered_enum(loop_within = 6)]
 pub(crate) enum Editor {
     #[default]
+    #[enum_func(exe(""))]
     NotNeed,
+    #[enum_func(exe("vim"))]
     Vim,
+    #[enum_func(exe("code"))]
     VSCode,
+    #[enum_func(exe("nvim"))]
     Neovim,
+    #[enum_func(exe("idea"))]
     Idea,
+    #[enum_func(exe("clion"))]
     Clion,
+    #[enum_func(exe("rustrover"))]
     Rustrover,
 }
 impl RadioOptionValue for Editor {
@@ -45,15 +53,6 @@ impl RadioOptionValue for Editor {
     }
 }
 impl Editor {
-    fn exe(self) -> String {
-        match self {
-            Self::NotNeed => String::new(),
-            Self::Neovim => "nvim".to_string(),
-            Self::VSCode => "code".to_string(),
-            _ => self.to_string().to_lowercase(),
-        }
-    }
-
     pub(crate) fn run(self, project_path: PathBuf, main: String) -> Result<ExitStatus, Error> {
         match self {
             Self::NotNeed => Ok(ExitStatus::default()),

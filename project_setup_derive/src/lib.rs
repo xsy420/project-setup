@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, parse_macro_input};
+use std::collections::HashMap;
+use syn::{DeriveInput, LitStr, Meta, Token, parse_macro_input, parse_str};
 #[proc_macro_derive(LoopableNumberedEnum, attributes(numbered_enum))]
 pub fn numbered_enum_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -19,23 +20,23 @@ pub fn numbered_enum_derive(input: TokenStream) -> TokenStream {
         }
     }
     let expanded = quote! {
-    impl #name {
-        pub fn num(&self) -> usize {
-            self.to_usize().unwrap()
+        impl #name {
+            pub fn num(&self) -> usize {
+                self.to_usize().unwrap()
+            }
+            pub fn next(&self) -> #name {
+                return #name::from_usize(self.next_index()).unwrap();
+            }
+            pub fn prev(&self) -> #name {
+                return #name::from_usize(self.prev_index()).unwrap();
+            }
+            pub fn next_index(&self) -> usize {
+                return (self.num() + 1) % #loop_within;
+            }
+            pub fn prev_index(&self) -> usize {
+                return (self.num() + #loop_within - 1) % #loop_within;
+            }
         }
-        pub fn next(&self) -> #name {
-            return #name::from_usize(self.next_index()).unwrap();
-        }
-        pub fn prev(&self) -> #name {
-            return #name::from_usize(self.prev_index()).unwrap();
-        }
-        pub fn next_index(&self) -> usize {
-            return (self.num() + 1) % #loop_within;
-        }
-        pub fn prev_index(&self) -> usize {
-            return (self.num() + #loop_within - 1) % #loop_within;
-        }
-    }
     };
     TokenStream::from(expanded)
 }
@@ -44,9 +45,9 @@ pub fn radio_option_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let expanded = quote! {
-    impl super::RadioOptionValue for #name {
-        fn selectable(&self) -> bool {true}
-    }
+        impl super::RadioOptionValue for #name {
+            fn selectable(&self) -> bool {true}
+        }
     };
     TokenStream::from(expanded)
 }
@@ -55,16 +56,71 @@ pub fn inner_state_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let expanded = quote! {
-    impl super::InnerState for #name {
-        fn state(self) -> InnerCommonState {
-            self.common_state
-        }
+        impl super::InnerState for #name {
+            fn state(self) -> InnerCommonState {
+                self.common_state
+            }
 
-        fn with_state(&mut self, state: InnerCommonState) -> &mut Self {
-            self.common_state = state;
-            self
+            fn with_state(&mut self, state: InnerCommonState) -> &mut Self {
+                self.common_state = state;
+                self
+            }
+        }
+    };
+    TokenStream::from(expanded)
+}
+#[proc_macro_derive(EnumFunc, attributes(enum_func))]
+pub fn enum_func_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let enum_name = &input.ident;
+    let mut func_branches: HashMap<String, Vec<proc_macro2::TokenStream>> = HashMap::new();
+    if let syn::Data::Enum(data_enum) = &input.data {
+        for v in &data_enum.variants {
+            let variant_name = &v.ident;
+            for attr in &v.attrs {
+                if !attr.path().is_ident("enum_func") {
+                    continue;
+                }
+                if let Ok(nested) = attr.parse_args_with(
+                    syn::punctuated::Punctuated::<Meta, Token![,]>::parse_terminated,
+                ) {
+                    for meta in nested {
+                        if let Meta::List(ml) = meta {
+                            let mut func_name: String = String::new();
+                            if let Some(func_name_ident) = ml.path.get_ident() {
+                                func_name = func_name_ident.to_string();
+                            }
+                            if !func_name.is_empty()
+                                && let Ok(s) = ml.parse_args::<LitStr>()
+                            {
+                                let func_value = s.value();
+                                func_branches
+                                    .entry(func_name)
+                                    .or_insert(Vec::new())
+                                    .push(quote! {
+                                        #enum_name::#variant_name => #func_value.to_string()
+                                    });
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
-        };
+    let generated_functions = func_branches.iter().map(|(func_name, branches)| {
+        let func_name = parse_str::<proc_macro2::TokenStream>(func_name).unwrap();
+        quote! {
+            fn #func_name(self) -> String {
+                match self {
+                    #(#branches),*
+                }
+            }
+        }
+    });
+    let expanded = quote! {
+        impl #enum_name {
+            #(#generated_functions)*
+        }
+    };
     TokenStream::from(expanded)
 }
