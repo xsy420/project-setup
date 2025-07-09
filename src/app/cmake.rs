@@ -3,7 +3,7 @@ use super::{
     InnerTipLabel, PrepareInner, RadioOption, RadioOptionTrait, handle_inner_keyevent,
 };
 use crate::{
-    InnerState, RadioOption,
+    EnumFunc, InnerState, RadioOption,
     common::{Editor, Vcs},
 };
 use anyhow::Result;
@@ -45,29 +45,15 @@ enum ProjectType {
     Executable,
     Library,
 }
-#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption, EnumFunc)]
 enum Language {
     #[default]
+    #[enum_func(main_file("main.c"), standard("C"))]
     C,
+    #[enum_func(main_file("main.cpp"), standard("CXX"))]
     Cpp,
 }
 impl Language {
-    fn main_file(self) -> String {
-        match self {
-            Self::C => "main.c",
-            Self::Cpp => "main.cpp",
-        }
-        .to_string()
-    }
-
-    fn standard(self) -> String {
-        match self {
-            Self::C => "C",
-            Self::Cpp => "CXX",
-        }
-        .to_string()
-    }
-
     fn main_file_content(self) -> String {
         match self {
             Self::C => {

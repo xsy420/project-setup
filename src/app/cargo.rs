@@ -3,7 +3,7 @@ use super::{
     InnerTipLabel, PrepareInner, RadioOption, handle_inner_keyevent,
 };
 use crate::{
-    InnerState, RadioOption,
+    EnumFunc, InnerState, RadioOption,
     common::{Editor, Vcs},
 };
 use anyhow::Result;
@@ -37,26 +37,13 @@ impl InnerField for CargoField {
         String::new()
     }
 }
-#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
+#[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption, EnumFunc)]
 enum ProjectType {
     #[default]
+    #[enum_func(args("--name"), main_file("src/main.rs"))]
     Executable,
+    #[enum_func(args("--lib"), main_file("src/lib.rs"))]
     Library,
-}
-impl ProjectType {
-    fn args(self) -> String {
-        match self {
-            Self::Executable => "--name".to_string(),
-            Self::Library => "--lib".to_string(),
-        }
-    }
-
-    fn main_file(self) -> String {
-        match self {
-            Self::Executable => "src/main.rs".to_string(),
-            Self::Library => "src/lib.rs".to_string(),
-        }
-    }
 }
 #[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum Edition {

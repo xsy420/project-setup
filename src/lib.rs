@@ -38,7 +38,7 @@ pub(crate) mod features {
 }
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use project_setup_derive::{InnerState, LoopableNumberedEnum, RadioOption};
+use project_setup_derive::{EnumFunc, InnerState, LoopableNumberedEnum, RadioOption};
 pub trait LoopableNumberedEnum {
     fn num(&self) -> usize;
     fn next_index(&self) -> usize;
