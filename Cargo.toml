@@ -90,7 +90,7 @@ strum_macros = "0.27.2"
 num-traits = "0.2.19"
 num-derive = "0.4.2"
 clap = { version = "4.5.47", features = ["derive"] }
-clap_complete = "4.5.57"
+clap_complete = "4.5.58"
 clap_mangen = "0.2.29"
 project_setup_derive = { path = "./project_setup_derive" }
 tui-big-text = "0.7.1"
