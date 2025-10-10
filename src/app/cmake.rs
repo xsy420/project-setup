@@ -32,7 +32,7 @@ enum CmakeField {
     Path,
 }
 impl InnerField for CmakeField {
-    fn vaildate_string(self, value: &mut str) -> String {
+    fn validate_string(self, value: &mut str) -> String {
         if value.is_empty() {
             return format!("{} cannot be empty", self.to_string().to_snake_case());
         }

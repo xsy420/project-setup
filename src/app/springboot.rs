@@ -94,7 +94,7 @@ enum SpringBootField {
     Path,
 }
 impl InnerField for SpringBootField {
-    fn vaildate_string(self, value: &mut str) -> String {
+    fn validate_string(self, value: &mut str) -> String {
         if value.is_empty() {
             return format!("{} cannot be empty", self.to_string().to_snake_case());
         }

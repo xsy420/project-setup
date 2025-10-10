@@ -30,7 +30,7 @@ impl InnerHandleKeyEventOutput {
 pub(super) trait InnerField:
     Clone + Copy + Display + IntoEnumIterator + FromPrimitive + ToPrimitive
 {
-    fn vaildate_string(self, value: &mut str) -> String;
+    fn validate_string(self, value: &mut str) -> String;
 }
 pub(super) trait InnerFieldMapping<F: InnerField> {
     fn get_focus_field_mut(&mut self, field: F) -> Option<&mut String>;
@@ -82,19 +82,19 @@ where
         KeyCode::Char(c) => {
             if let Some(x) = inner.get_focus_field_mut(field) {
                 x.push(c);
-                state.error_messages[state.focus_index.value] = field.vaildate_string(x);
+                state.error_messages[state.focus_index.value] = field.validate_string(x);
             }
         }
         KeyCode::Backspace => {
             if let Some(x) = inner.get_focus_field_mut(field) {
                 x.pop();
-                state.error_messages[state.focus_index.value] = field.vaildate_string(x);
+                state.error_messages[state.focus_index.value] = field.validate_string(x);
             }
         }
         KeyCode::Enter => {
             F::iter().for_each(|field| {
                 if let Some(x) = inner.get_focus_field_mut(field) {
-                    state.error_messages[field.to_usize().unwrap()] = field.vaildate_string(x);
+                    state.error_messages[field.to_usize().unwrap()] = field.validate_string(x);
                 }
             });
             if state.error_messages.iter().all(String::is_empty) {
