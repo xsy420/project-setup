@@ -149,9 +149,9 @@ impl Inner for CargoInner {
         let split_tip_input_error_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(1), Constraint::Max(3), Constraint::Max(1)]);
-        for i in (0..labels.len()).step_by(2) {
+        for i in (0 .. labels.len()).step_by(2) {
             let line_layout = split_line_layout.split(form_layout[i / 2]);
-            for side in 0..2 {
+            for side in 0 .. 2 {
                 let index = i + side;
                 if index == labels.len() {
                     break;
@@ -188,7 +188,7 @@ impl Inner for CargoInner {
                 if let Some(r) = self.get_radio(field) {
                     f.render_widget(
                         Paragraph::new(
-                            (0..r.length())
+                            (0 .. r.length())
                                 .map(|curr| r.get_symbol(curr))
                                 .collect::<Vec<String>>()
                                 .join("    "),

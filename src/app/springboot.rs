@@ -293,9 +293,9 @@ impl Inner for SpringBootInner {
         let split_tip_input_error_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(1), Constraint::Max(3), Constraint::Max(1)]);
-        for i in (0..labels.len()).step_by(2) {
+        for i in (0 .. labels.len()).step_by(2) {
             let line_layout = split_line_layout.split(form_layout[i / 2]);
-            for side in 0..2 {
+            for side in 0 .. 2 {
                 let index = i + side;
                 if index == labels.len() {
                     break;
@@ -332,7 +332,7 @@ impl Inner for SpringBootInner {
                 if let Some(r) = self.get_radio(field) {
                     f.render_widget(
                         Paragraph::new(
-                            (0..r.length())
+                            (0 .. r.length())
                                 .map(|curr| r.get_symbol(curr))
                                 .collect::<Vec<String>>()
                                 .join("    "),
@@ -417,7 +417,7 @@ impl Inner for SpringBootInner {
                 self.language.value.to_string().to_lowercase(),
                 self.group_id.replace('.', "/"),
                 self.artifact_id,
-                self.artifact_id[0..1].to_uppercase() + &self.artifact_id[1..],
+                self.artifact_id[0 .. 1].to_uppercase() + &self.artifact_id[1 ..],
                 self.language.value.extension()
             ),
         )?;
