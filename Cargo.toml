@@ -2,23 +2,13 @@
 name = "project-setup"
 version = "0.1.0"
 edition = "2024"
-authors = ["xsy420 <xsy0420@gmail.com>"]
-license = "Apache-2.0"
-default-run = "project-setup"
+rust-version = "1.90.0"
 description = "A TUI to help you setup a project easily."
-
+readme = "README.md"
 homepage = "https://github.com/xsy420/project-setup"
 repository = "https://github.com/xsy420/project-setup"
-readme = "README.md"
-rust-version = "1.88.0"
-
-[[bin]]
-name = "project-setup-completions"
-path = "src/bin/completions.rs"
-
-[[bin]]
-name = "project-setup-mangen"
-path = "src/bin/mangen.rs"
+license = "Apache-2.0"
+default-run = "project-setup"
 
 [package.metadata.deb]
 assets = [
@@ -59,6 +49,7 @@ assets = [
   ],
 ]
 depends = ["libgcc-s1 (>= 3.0)"]
+
 [package.metadata.generate-rpm]
 assets = [
   { source = "target/release/project-setup", dest = "/usr/bin/project-setup", mode = "755" },
@@ -69,32 +60,47 @@ assets = [
   { source = "completions/project-setup.fish", dest = "/usr/share/fish/vendor_completions.d/project-setup.fish", mode = "644" },
   { source = "completions/_project-setup", dest = "/usr/share/zsh/site-completions/", mode = "644" },
 ]
-[profile.release]
-strip = true
 
-[profile.dev]
-strip = true
+[[bin]]
+name = "project-setup-completions"
+path = "src/bin/completions.rs"
+
+[[bin]]
+name = "project-setup-mangen"
+path = "src/bin/mangen.rs"
+
+[dependencies]
+anyhow = "1.0.100"
+clap = { version = "4.5.48", features = ["derive"] }
+clap_complete = "4.5.58"
+clap_mangen = "0.2.29"
+heck = "0.5.0"
+num-derive = "0.4.2"
+num-traits = "0.2.19"
+project_setup_derive = { path = "./project_setup_derive" }
+ratatui = { version = "0.29.0", default-features = false, features = [
+  "crossterm",
+] }
+reqwest = { version = "0.12.23", default-features = false, features = [
+  "default-tls",
+  "blocking",
+], optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+strum = "0.27.2"
+strum_macros = "0.27.2"
+tokio = { version = "1.47.1", features = ["full"] }
+tui-big-text = "0.7.1"
+zip = { version = "6.0.0", default-features = false, features = ["deflate"], optional = true }
 
 [features]
 # default = ["reqwest", "zip"]
 default = []
 reqwest = ["dep:reqwest"]
 zip = ["dep:zip"]
-[dependencies]
-ratatui = { version = "0.29.0", default-features = false, features = ["crossterm"]}
-anyhow = "1.0.100"
-reqwest = { version = "0.12.23", default-features = false, features = ["blocking", "default-tls"] , optional = true}
-zip = { version = "6.0.0", default-features = false, features = ["deflate"], optional = true }
-strum = "0.27.2"
-strum_macros = "0.27.2"
-num-traits = "0.2.19"
-num-derive = "0.4.2"
-clap = { version = "4.5.48", features = ["derive"] }
-clap_complete = "4.5.58"
-clap_mangen = "0.2.29"
-project_setup_derive = { path = "./project_setup_derive" }
-tui-big-text = "0.7.1"
-heck = "0.5.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1.47.1", features = ["full"]}
+
+[profile.dev]
+strip = true
+
+[profile.release]
+strip = true
