@@ -71,7 +71,7 @@ path = "src/bin/mangen.rs"
 
 [dependencies]
 anyhow = "1.0.100"
-clap = { version = "4.5.49", features = ["derive"] }
+clap = { version = "4.5.50", features = ["derive"] }
 clap_complete = "4.5.59"
 clap_mangen = "0.2.30"
 heck = "0.5.0"
