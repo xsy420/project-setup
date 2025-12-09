@@ -1,4 +1,7 @@
 [default.extend-words]
 ratatui = "ratatui"
-[files]
-extend-exclude = ["CHANGELOG.md"]
+
+[type.md]
+extend-ignore-re = [
+  "\\[[[:xdigit:]]{7}\\]\\(https://github.com/xsy420/project-setup/commit/[[:xdigit:]]{40}\\)",
+]
