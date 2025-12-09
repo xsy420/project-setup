@@ -74,7 +74,7 @@ footer = """
 trim = true
 # postprocessors
 postprocessors = [
-  { pattern = '<REPO>', replace = "https://github.com/xsy420/project-setup" }, # replace repository URL
+  { pattern = "<REPO>", replace = "https://github.com/xsy420/project-setup" },  # replace repository URL
 ]
 # render body even when there are no releases to process
 # render_always = true
@@ -91,10 +91,10 @@ split_commits = false
 # regex for preprocessing the commit messages
 commit_preprocessors = [
   # Replace issue numbers
-  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))"},
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))" },
   # Check spelling of the commit with https://github.com/crate-ci/typos
   # If the spelling is incorrect, it will be automatically fixed.
-  { pattern = '.*', replace_command = 'typos --write-changes -' },
+  { pattern = ".*", replace_command = "typos --write-changes -" },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
@@ -108,6 +108,8 @@ commit_parsers = [
   { message = "^test", group = "<!-- 6 -->🧪 Testing" },
   { message = "^chore\\(release\\): prepare for", skip = true },
   { message = "^chore\\(deps.*\\)", skip = true },
+  # dependabot is using commit message starts with build(deps)
+  { message = "^build\\(deps.*\\)", skip = true },
   { message = "^chore\\(pr\\)", skip = true },
   { message = "^chore\\(pull\\)", skip = true },
   { message = "^chore|^ci", group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
