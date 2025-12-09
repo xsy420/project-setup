@@ -39,7 +39,23 @@ impl Application {
     }
 
     fn ui(&mut self, frame: &mut Frame) {
-        if self.default_inner.is_none() {
+        if let Some(default_inner) = self.default_inner {
+            let inner = self.inners[default_inner.num()].as_mut();
+            inner.render(frame, true, frame.area());
+            // 底部帮助栏
+            let help_bar = Paragraph::new(if self.focus_left_side {
+                "j/k: move | Enter: choose | q: quit".to_string()
+            } else {
+                format!("{}q: quit", inner.bottom_help_message())
+            })
+            .style(Style::default().fg(Color::Gray))
+            .alignment(Alignment::Center);
+            let bottom_layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Min(0), Constraint::Length(1)])
+                .split(frame.area());
+            frame.render_widget(help_bar, bottom_layout[1]);
+        } else {
             // 主布局 - 水平分割为左右两部分
             let main_layout = Layout::default()
                 .direction(Direction::Horizontal)
@@ -89,22 +105,6 @@ impl Application {
                 "j/k: move | Enter: choose | q: quit".to_string()
             } else {
                 format!("{}Esc: focus back to left", inner.bottom_help_message())
-            })
-            .style(Style::default().fg(Color::Gray))
-            .alignment(Alignment::Center);
-            let bottom_layout = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Min(0), Constraint::Length(1)])
-                .split(frame.area());
-            frame.render_widget(help_bar, bottom_layout[1]);
-        } else {
-            let inner = self.inners[self.default_inner.unwrap().num()].as_mut();
-            inner.render(frame, true, frame.area());
-            // 底部帮助栏
-            let help_bar = Paragraph::new(if self.focus_left_side {
-                "j/k: move | Enter: choose | q: quit".to_string()
-            } else {
-                format!("{}q: quit", inner.bottom_help_message())
             })
             .style(Style::default().fg(Color::Gray))
             .alignment(Alignment::Center);
@@ -192,8 +192,8 @@ impl Application {
                         _ => {}
                     }
                 } else {
-                    let inner = self.inners[if self.default_inner.is_some() {
-                        self.default_inner.unwrap()
+                    let inner = self.inners[if let Some(default_inner) = self.default_inner {
+                        default_inner
                     } else {
                         self.selected
                     }
