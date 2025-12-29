@@ -2,9 +2,9 @@ use super::{Inner, InnerHandleKeyEventOutput, PrepareInner};
 use ratatui::{
     crossterm::event::KeyEvent,
     layout::{Constraint, Direction, Layout},
-    style::{Style, Stylize},
+    // style::{Style, Stylize},
 };
-use tui_big_text::{BigText, PixelSize};
+// use tui_big_text::{BigText, PixelSize};
 pub(crate) struct WipInner {}
 impl PrepareInner for WipInner {
     async fn prepare(_tx: tokio::sync::mpsc::Sender<u16>) {}
@@ -16,16 +16,19 @@ impl PrepareInner for WipInner {
 impl Inner for WipInner {
     fn render(&mut self, f: &mut ratatui::Frame, _: bool, area: ratatui::prelude::Rect) {
         f.render_widget(
-            BigText::builder()
-                .pixel_size(PixelSize::Full)
-                .centered()
-                .style(Style::new().blue())
-                .lines(vec![
-                    "Work".yellow().into(),
-                    "In".yellow().into(),
-                    "Progress".yellow().into(),
-                ])
-                .build(),
+            // BigText::builder()
+            //     .pixel_size(PixelSize::Full)
+            //     .centered()
+            //     .style(Style::new().blue())
+            //     .lines(vec![
+            //         "Work".yellow().into(),
+            //         "In".yellow().into(),
+            //         "Progress".yellow().into(),
+            //     ])
+            //     .build(),
+            // use a empty Paragraph widget to skip tui_big_text check until tui_big_text migrate
+            // to ratatui 0.30.0
+            ratatui::widgets::Paragraph::new(""),
             Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
