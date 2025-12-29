@@ -128,6 +128,9 @@ impl Application {
             ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>>
             + Send
             + 'static,
+        <B as Backend>::Error: Sync,
+        <B as Backend>::Error: Send,
+        <B as Backend>::Error: 'static,
     {
         if let Some(p) = Args::parse().project_type
             && p != pt
@@ -156,7 +159,12 @@ impl Application {
     }
 
     /// # Errors
-    pub fn prepare_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<()> {
+    pub fn prepare_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<()>
+    where
+        <B as Backend>::Error: Sync,
+        <B as Backend>::Error: Send,
+        <B as Backend>::Error: 'static,
+    {
         Self::prepare_inner(
             terminal,
             ProjectType::SpringBoot,
@@ -167,7 +175,12 @@ impl Application {
 
     /// # Errors
     /// # Panics
-    pub fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<()> {
+    pub fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<()>
+    where
+        <B as Backend>::Error: Send,
+        <B as Backend>::Error: Sync,
+        <B as Backend>::Error: 'static,
+    {
         loop {
             terminal.draw(|f| self.ui(f))?;
             // 处理输入事件
