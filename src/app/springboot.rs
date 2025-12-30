@@ -139,8 +139,8 @@ enum Language {
 }
 #[derive(Clone, Copy, Debug, Default, Display, EnumIter, PartialEq, RadioOption)]
 enum JavaVersion {
-    #[strum(to_string = "23")]
-    TwentyThree,
+    #[strum(to_string = "25")]
+    TwentyFive,
     #[strum(to_string = "21")]
     TwentyOne,
     #[default]
