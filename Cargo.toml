@@ -81,9 +81,11 @@ project_setup_derive = { path = "./project_setup_derive" }
 ratatui = { version = "0.30.0", default-features = false, features = [
   "crossterm",
 ] }
-reqwest = { version = "0.12.28", default-features = false, features = [
+reqwest = { version = "0.13.1", default-features = false, features = [
   "default-tls",
   "blocking",
+  "form",
+  "query"
 ], optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
