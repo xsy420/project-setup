@@ -1,9 +1,10 @@
 use super::{Inner, InnerHandleKeyEventOutput, PrepareInner};
 use ratatui::{
     crossterm::event::KeyEvent,
-    layout::{Constraint, Direction, Layout},
+    layout::Layout,
     style::{Style, Stylize},
 };
+use ratatui_macros::constraints;
 use tui_big_text::{BigText, PixelSize};
 pub(crate) struct WipInner {}
 impl PrepareInner for WipInner {
@@ -26,14 +27,7 @@ impl Inner for WipInner {
                     "Progress".yellow().into(),
                 ])
                 .build(),
-            Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(70),
-                    Constraint::Percentage(15),
-                ])
-                .split(area)[1],
+            Layout::vertical(constraints![==15%,==70%,==15%]).split(area)[1],
         );
     }
 

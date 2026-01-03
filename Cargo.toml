@@ -81,6 +81,7 @@ project_setup_derive = { path = "./project_setup_derive" }
 ratatui = { version = "0.30.0", default-features = false, features = [
   "crossterm",
 ] }
+ratatui-macros = "0.7.0"
 reqwest = { version = "0.13.1", default-features = false, features = [
   "default-tls",
   "blocking",
