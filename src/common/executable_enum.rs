@@ -1,16 +1,15 @@
 use crate::app::{PrepareRecv, PrepareTrait};
 use crate::common::{Editor, Vcs};
-use lazy_static::lazy_static;
 use std::process::Command;
+use std::sync::LazyLock;
 use std::{collections::HashMap, sync::Mutex};
 use strum::IntoEnumIterator;
 use tokio::sync::mpsc;
 pub(crate) trait ExecutableEnumTrait {
     fn exe(&self) -> String;
 }
-lazy_static! {
-    pub static ref cache: Mutex<HashMap<String, bool>> = Mutex::new(HashMap::new());
-}
+pub static EXECUTABLE_ENUM_CACHE: LazyLock<Mutex<HashMap<String, bool>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 pub(crate) struct ExecutableEnum {}
 impl PrepareTrait for ExecutableEnum {
     async fn prepare(permit: &mut mpsc::PermitIterator<'_, PrepareRecv>, offset: f64) {
@@ -23,7 +22,7 @@ impl PrepareTrait for ExecutableEnum {
                     .output()
                     .map(|o| o.status.success())
                     .unwrap_or(false);
-            cache.lock().unwrap().insert(ele, res);
+            EXECUTABLE_ENUM_CACHE.lock().unwrap().insert(ele, res);
             recv.send(permit);
             recv.next_step();
         }

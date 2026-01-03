@@ -29,7 +29,7 @@ pub(crate) mod common {
     mod project_type;
     mod vcs;
     pub(crate) use editor::Editor;
-    pub(crate) use executable_enum::{ExecutableEnum, ExecutableEnumTrait, cache};
+    pub(crate) use executable_enum::{EXECUTABLE_ENUM_CACHE, ExecutableEnum, ExecutableEnumTrait};
     pub(crate) use loop_number::LoopNumber;
     pub(crate) use project_type::ProjectType;
     pub(crate) use vcs::Vcs;
