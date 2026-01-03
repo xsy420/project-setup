@@ -1,10 +1,10 @@
 use super::{
     Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
-    InnerTipLabel, PrepareInner, RadioOption, RadioOptionTrait, handle_inner_keyevent,
+    InnerTipLabel, PrepareRecv, PrepareTrait, RadioOption, RadioOptionTrait, handle_inner_keyevent,
 };
 use crate::{
     EnumFunc, InnerState, LoopableNumberedEnum, RadioOption,
-    common::{Editor, Vcs},
+    common::{Editor, ProjectType, Vcs},
     features::{RequestMethod, download_file, unzip},
 };
 use anyhow::Result;
@@ -254,10 +254,14 @@ impl InnerTipLabel for SpringBootInner {
         ]
     }
 }
-impl PrepareInner for SpringBootInner {
-    async fn prepare(tx: mpsc::Sender<u16>) {
+impl PrepareTrait for SpringBootInner {
+    async fn prepare(permit: &mut mpsc::PermitIterator<'_, PrepareRecv>, offset: f64) {
+        if !ProjectType::SpringBoot.in_args() {
+            return;
+        }
+        let mut recv = PrepareRecv::new(offset);
         let metadata_file = env::temp_dir().join("springboot_metadata.json");
-        tx.send(25).await.unwrap();
+        recv.send(permit);
         if !metadata_file.exists() {
             let _ = download_file(
                 "https://start.spring.io/metadata/client",
@@ -266,15 +270,22 @@ impl PrepareInner for SpringBootInner {
                 &metadata_file,
             );
         }
-        tx.send(50).await.unwrap();
+        recv.next_step().send(permit);
         let data = fs::read_to_string(metadata_file).unwrap();
-        tx.send(75).await.unwrap();
+        recv.next_step().send(permit);
         let _ = METADATA.set(serde_json::from_str(&data).unwrap());
-        tx.send(100).await.unwrap();
+        recv.next_step().send(permit);
     }
 
-    fn is_prepared() -> bool {
-        METADATA.get().is_some()
+    fn descs() -> Vec<String> {
+        [
+            "Getting SpringBoot metadata file path",
+            "Downloading SpringBoot metadata file",
+            "Row reading SpringBoot metadata file",
+            "Parsing SpringBoot metadata in json",
+        ]
+        .map(ToString::to_string)
+        .to_vec()
     }
 }
 impl Inner for SpringBootInner {

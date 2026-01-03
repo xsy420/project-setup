@@ -1,8 +1,9 @@
 use crate::app::RadioOptionValue;
+use crate::common::ExecutableEnumTrait;
 use anyhow::Result;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use project_setup_derive::{EnumFunc, LoopableNumberedEnum};
+use project_setup_derive::{ExecutableEnum, LoopableNumberedEnum};
 use std::{
     io::Error,
     path::PathBuf,
@@ -14,42 +15,35 @@ use strum_macros::{Display, EnumIter};
     Debug,
     Default,
     LoopableNumberedEnum,
-    EnumFunc,
     FromPrimitive,
     ToPrimitive,
     Clone,
     Display,
     EnumIter,
     PartialEq,
+    ExecutableEnum,
 )]
 #[numbered_enum(loop_within = 6)]
 pub(crate) enum Editor {
     #[default]
-    #[enum_func(exe(""))]
+    #[exe("")]
     NotNeed,
-    #[enum_func(exe("vim"))]
+    #[exe("vim")]
     Vim,
-    #[enum_func(exe("code"))]
+    #[exe("code")]
     VSCode,
-    #[enum_func(exe("nvim"))]
+    #[exe("nvim")]
     Neovim,
-    #[enum_func(exe("idea"))]
+    #[exe("idea")]
     Idea,
-    #[enum_func(exe("clion"))]
+    #[exe("clion")]
     Clion,
-    #[enum_func(exe("rustrover"))]
+    #[exe("rustrover")]
     Rustrover,
 }
 impl RadioOptionValue for Editor {
     fn selectable(&self) -> bool {
-        match self {
-            Self::NotNeed => true,
-            _ => Command::new(self.exe())
-                .arg("--version")
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false),
-        }
+        *super::cache.lock().unwrap().get(&self.exe()).unwrap()
     }
 }
 impl Editor {

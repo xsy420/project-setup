@@ -124,3 +124,47 @@ pub fn enum_func_derive(input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+#[proc_macro_derive(ExecutableEnum, attributes(exe))]
+pub fn executable_enum_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    let data = match &input.data {
+        syn::Data::Enum(data) => data,
+        _ => panic!("ExecutableEnum can only be derived for enums"),
+    };
+    let match_arms: Vec<_> = data
+        .variants
+        .iter()
+        .map(|variant| {
+            let variant_name = &variant.ident;
+            // 查找 #[exe("...")] 属性
+            let mut exe_value = None;
+            for attr in &variant.attrs {
+                if attr.path().is_ident("exe") {
+                    let value = attr
+                        .parse_args::<syn::LitStr>()
+                        .expect("Expected string literal in #[exe] attribute");
+                    exe_value = Some(value.value());
+                    break;
+                }
+            }
+            let exe_str = match exe_value {
+                Some(s) => s,
+                None => panic!("Variant {} is missing #[exe] attribute", variant_name),
+            };
+            quote! {
+                #name::#variant_name => #exe_str,
+            }
+        })
+        .collect();
+    let expanded = quote! {
+        impl crate::common::ExecutableEnumTrait for #name {
+            fn exe(&self) -> String {
+                match self {
+                    #(#match_arms)*
+                }.to_string()
+            }
+        }
+    };
+    TokenStream::from(expanded)
+}
