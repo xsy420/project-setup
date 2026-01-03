@@ -8,7 +8,7 @@ use clap::Parser;
 use ratatui::{
     Frame, Terminal,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
-    layout::{Alignment, Layout},
+    layout::Layout,
     prelude::*,
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Gauge, List, ListState, Paragraph},
@@ -50,7 +50,7 @@ impl Application {
                 format!("{}q: quit", inner.bottom_help_message())
             })
             .style(Style::default().fg(Color::Gray))
-            .alignment(Alignment::Center);
+            .centered();
             let bottom_layout = Layout::vertical(constraints![>=0,==1]).split(frame.area());
             frame.render_widget(help_bar, bottom_layout[1]);
         } else {
@@ -102,7 +102,7 @@ impl Application {
                 format!("{}Esc: focus back to left", inner.bottom_help_message())
             })
             .style(Style::default().fg(Color::Gray))
-            .alignment(Alignment::Center);
+            .centered();
             let bottom_layout = Layout::vertical(constraints![>=0,==1]).split(frame.area());
             frame.render_widget(help_bar, bottom_layout[1]);
         }
