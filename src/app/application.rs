@@ -8,11 +8,12 @@ use clap::Parser;
 use ratatui::{
     Frame, Terminal,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
-    layout::{Alignment, Constraint, Direction, Layout},
+    layout::{Alignment, Layout},
     prelude::*,
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Gauge, List, ListState, Paragraph},
 };
+use ratatui_macros::constraints;
 use strum::IntoEnumIterator;
 use tokio::sync::mpsc;
 pub struct Application {
@@ -50,17 +51,11 @@ impl Application {
             })
             .style(Style::default().fg(Color::Gray))
             .alignment(Alignment::Center);
-            let bottom_layout = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Min(0), Constraint::Length(1)])
-                .split(frame.area());
+            let bottom_layout = Layout::vertical(constraints![>=0,==1]).split(frame.area());
             frame.render_widget(help_bar, bottom_layout[1]);
         } else {
             // 主布局 - 水平分割为左右两部分
-            let main_layout = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Length(20), Constraint::Min(10)])
-                .split(frame.area());
+            let main_layout = Layout::horizontal(constraints![==20,>=10]).split(frame.area());
             let items: Vec<String> = ProjectType::iter().map(|x| x.to_string()).collect();
             // 左侧列表
             let list = List::new(items)
@@ -108,10 +103,7 @@ impl Application {
             })
             .style(Style::default().fg(Color::Gray))
             .alignment(Alignment::Center);
-            let bottom_layout = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Min(0), Constraint::Length(1)])
-                .split(frame.area());
+            let bottom_layout = Layout::vertical(constraints![>=0,==1]).split(frame.area());
             frame.render_widget(help_bar, bottom_layout[1]);
         }
     }

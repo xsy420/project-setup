@@ -14,10 +14,11 @@ use num_traits::{FromPrimitive, ToPrimitive};
 use ratatui::{
     Frame,
     crossterm::event::KeyEvent,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Layout, Rect},
     style::Color,
     widgets::{Block, BorderType, Borders, Paragraph},
 };
+use ratatui_macros::constraints;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{env, fmt::Debug, fs, path::PathBuf, sync::OnceLock};
@@ -280,19 +281,10 @@ impl Inner for SpringBootInner {
     fn render(&mut self, f: &mut Frame, focus_right_side: bool, area: Rect) {
         let labels = Self::labels();
         // 表单布局 - 垂直排列输入框
-        let form_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Length(5); 6])
-            .split(area);
-        let split_line_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Ratio(1, 2); 2]);
-        let split_label_input_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(20), Constraint::Min(0)]);
-        let split_tip_input_error_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Max(1), Constraint::Max(3), Constraint::Max(1)]);
+        let form_layout = Layout::vertical(constraints![==5;6]).split(area);
+        let split_line_layout = Layout::horizontal(constraints![==1/2;2]);
+        let split_label_input_layout = Layout::horizontal(constraints![==20,>=0]);
+        let split_tip_input_error_layout = Layout::vertical(constraints![<=1,<=3,<=1]);
         for i in (0 .. labels.len()).step_by(2) {
             let line_layout = split_line_layout.split(form_layout[i / 2]);
             for side in 0 .. 2 {
