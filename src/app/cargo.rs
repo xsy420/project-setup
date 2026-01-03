@@ -1,6 +1,6 @@
 use super::{
     Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
-    InnerTipLabel, PrepareInner, RadioOption, handle_inner_keyevent,
+    InnerTipLabel, RadioOption, handle_inner_keyevent,
 };
 use crate::{
     EnumFunc, InnerState, RadioOption,
@@ -124,13 +124,6 @@ impl InnerTipLabel for CargoInner {
 
     fn labels() -> &'static [&'static str] {
         &["name", "project_type", "edition", "editor", "vcs", "path"]
-    }
-}
-impl PrepareInner for CargoInner {
-    async fn prepare(_tx: tokio::sync::mpsc::Sender<u16>) {}
-
-    fn is_prepared() -> bool {
-        true
     }
 }
 impl Inner for CargoInner {

@@ -1,6 +1,6 @@
 use super::{
     Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
-    InnerTipLabel, PrepareInner, RadioOption, RadioOptionTrait, handle_inner_keyevent,
+    InnerTipLabel, RadioOption, RadioOptionTrait, handle_inner_keyevent,
 };
 use crate::{
     EnumFunc, InnerState, RadioOption,
@@ -164,13 +164,6 @@ impl InnerTipLabel for CmakeInner {
             "vcs",
             "path",
         ]
-    }
-}
-impl PrepareInner for CmakeInner {
-    async fn prepare(_tx: tokio::sync::mpsc::Sender<u16>) {}
-
-    fn is_prepared() -> bool {
-        true
     }
 }
 impl Inner for CmakeInner {

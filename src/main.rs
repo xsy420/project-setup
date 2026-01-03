@@ -1,6 +1,9 @@
 use anyhow::Result;
 use clap::Parser;
-use project_setup::{app::Application, args::Args};
+use project_setup::{
+    app::{Application, PrepareApplication},
+    args::Args,
+};
 use ratatui::{
     Terminal,
     crossterm::{
@@ -19,7 +22,7 @@ async fn main() -> Result<()> {
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    Application::prepare_app(&mut terminal)?;
+    PrepareApplication::default().run(&mut terminal)?;
     // 创建应用
     let app = Application::new(args);
     let res = app.run(&mut terminal);

@@ -1,21 +1,16 @@
-use super::{
-    CargoInner, CmakeInner, SpringBootInner, WipInner,
-    inner::{Inner, PrepareInner},
-};
+use super::{CargoInner, CmakeInner, SpringBootInner, WipInner, inner::Inner};
 use crate::{Args, common::ProjectType};
 use anyhow::Result;
-use clap::Parser;
 use ratatui::{
     Frame, Terminal,
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     layout::Layout,
     prelude::*,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Gauge, List, ListState, Paragraph},
+    widgets::{Block, Borders, List, ListState, Paragraph},
 };
 use ratatui_macros::constraints;
 use strum::IntoEnumIterator;
-use tokio::sync::mpsc;
 pub struct Application {
     selected: ProjectType,
     focus_left_side: bool,
@@ -106,63 +101,6 @@ impl Application {
             let bottom_layout = Layout::vertical(constraints![>=0,==1]).split(frame.area());
             frame.render_widget(help_bar, bottom_layout[1]);
         }
-    }
-
-    fn prepare_inner<B: Backend, F: Fn() -> bool, P>(
-        terminal: &mut Terminal<B>,
-        pt: ProjectType,
-        is_prepared: F,
-        prepare: P,
-    ) -> Result<()>
-    where
-        P: FnOnce(
-                mpsc::Sender<u16>,
-            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>>
-            + Send
-            + 'static,
-        <B as Backend>::Error: Sync,
-        <B as Backend>::Error: Send,
-        <B as Backend>::Error: 'static,
-    {
-        if let Some(p) = Args::parse().project_type
-            && p != pt
-        {
-            return Ok(());
-        }
-        let (tx, mut rx) = mpsc::channel(100);
-        tokio::spawn(async move {
-            prepare(tx).await;
-        });
-        let mut progress = 0;
-        while !is_prepared() {
-            terminal.draw(|f| {
-                let gauge = Gauge::default()
-                    .block(Block::default().title("下载进度").borders(Borders::ALL))
-                    .gauge_style(Style::default().fg(Color::Yellow))
-                    .percent(progress);
-                f.render_widget(gauge, f.area());
-                // 检查通道中的进度更新
-                if let Ok(new_progress) = rx.try_recv() {
-                    progress = new_progress;
-                }
-            })?;
-        }
-        Ok(())
-    }
-
-    /// # Errors
-    pub fn prepare_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<()>
-    where
-        <B as Backend>::Error: Sync,
-        <B as Backend>::Error: Send,
-        <B as Backend>::Error: 'static,
-    {
-        Self::prepare_inner(
-            terminal,
-            ProjectType::SpringBoot,
-            SpringBootInner::is_prepared,
-            |tx| Box::pin(SpringBootInner::prepare(tx)),
-        )
     }
 
     /// # Errors

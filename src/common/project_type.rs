@@ -1,4 +1,4 @@
-use clap::ValueEnum;
+use clap::{Parser, ValueEnum};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use project_setup_derive::LoopableNumberedEnum;
@@ -23,4 +23,14 @@ pub(crate) enum ProjectType {
     Cmake,
     Maven,
     Cargo,
+}
+impl ProjectType {
+    pub(crate) fn in_args(self) -> bool {
+        if let Some(p) = crate::Args::parse().project_type
+            && p != self
+        {
+            return false;
+        }
+        true
+    }
 }
