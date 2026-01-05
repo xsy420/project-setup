@@ -1,5 +1,4 @@
 use crate::app::{PreparePermit, PrepareRecv, PrepareTrait};
-use crate::common::{Editor, Vcs};
 use std::process::Command;
 use std::sync::LazyLock;
 use std::{collections::HashMap, sync::Mutex};
@@ -33,9 +32,9 @@ impl PrepareTrait for Executable {
 }
 impl Executable {
     fn list(descs: bool) -> Vec<String> {
-        Vcs::iter()
+        super::Vcs::iter()
             .map(|x| x.exe())
-            .chain(Editor::iter().map(|x| x.exe()))
+            .chain(super::Editor::iter().map(|x| x.exe()))
             .chain(["curl", "wget", "unzip", "tar", "7z"].map(ToString::to_string))
             .map(|s| {
                 if descs {
