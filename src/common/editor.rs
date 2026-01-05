@@ -43,11 +43,7 @@ pub(crate) enum Editor {
 }
 impl RadioOptionValue for Editor {
     fn selectable(&self) -> bool {
-        *super::EXECUTABLE_ENUM_CACHE
-            .lock()
-            .unwrap()
-            .get(&self.exe())
-            .unwrap()
+        super::Executable::executable(&self.exe())
     }
 }
 impl Editor {

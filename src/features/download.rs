@@ -1,3 +1,5 @@
+#[cfg(not(feature = "reqwest"))]
+use crate::common::Executable;
 use anyhow::Error;
 #[cfg(feature = "reqwest")]
 use reqwest::blocking::Client;
@@ -25,7 +27,7 @@ pub(crate) fn download_file(
         .collect::<Vec<_>>()
         .join("&");
     // 优先尝试 curl
-    if Command::new("curl").arg("--version").output().is_ok() {
+    if Executable::executable("curl") {
         use std::process::Stdio;
         let output = Command::new("curl")
             .arg("--silent")
@@ -53,7 +55,7 @@ pub(crate) fn download_file(
         }
     }
     // 其次尝试 wget
-    else if Command::new("wget").arg("--version").output().is_ok() {
+    else if Executable::executable("wget") {
         let mut command = Command::new("wget");
         command.arg("--quiet").arg("-O").arg(output);
         if *method == RequestMethod::POST {

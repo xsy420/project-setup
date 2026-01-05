@@ -52,10 +52,6 @@ impl Vcs {
 }
 impl RadioOptionValue for Vcs {
     fn selectable(&self) -> bool {
-        *super::EXECUTABLE_ENUM_CACHE
-            .lock()
-            .unwrap()
-            .get(&self.exe())
-            .unwrap()
+        super::Executable::executable(&self.exe())
     }
 }

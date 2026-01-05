@@ -7,21 +7,21 @@ use strum::IntoEnumIterator;
 pub(crate) trait ExecutableEnumTrait {
     fn exe(&self) -> String;
 }
-pub static EXECUTABLE_ENUM_CACHE: LazyLock<Mutex<HashMap<String, bool>>> =
+static EXECUTABLE_CACHE: LazyLock<Mutex<HashMap<String, bool>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
-pub(crate) struct ExecutableEnum {}
-impl PrepareTrait for ExecutableEnum {
+pub(crate) struct Executable {}
+impl PrepareTrait for Executable {
     async fn prepare(permit: &mut PreparePermit<'_>, offset: f64) -> bool {
         let cvs: Vec<String> = Self::list(false);
         let mut recv = PrepareRecv::new(offset);
         for ele in cvs {
             let res = ele.is_empty()
                 || Command::new(ele.clone())
-                    .arg("--version")
+                    .arg(if ele.eq("7z") { "--help" } else { "--version" })
                     .output()
                     .map(|o| o.status.success())
                     .unwrap_or(false);
-            EXECUTABLE_ENUM_CACHE.lock().unwrap().insert(ele, res);
+            EXECUTABLE_CACHE.lock().unwrap().insert(ele, res);
             recv.send_ok(permit);
         }
         true
@@ -31,11 +31,12 @@ impl PrepareTrait for ExecutableEnum {
         Self::list(true)
     }
 }
-impl ExecutableEnum {
+impl Executable {
     fn list(descs: bool) -> Vec<String> {
         Vcs::iter()
             .map(|x| x.exe())
             .chain(Editor::iter().map(|x| x.exe()))
+            .chain(["curl", "wget", "unzip", "tar", "7z"].map(ToString::to_string))
             .map(|s| {
                 if descs {
                     format!(
@@ -47,5 +48,9 @@ impl ExecutableEnum {
                 }
             })
             .collect()
+    }
+
+    pub(crate) fn executable(cmd: &str) -> bool {
+        *EXECUTABLE_CACHE.lock().unwrap().get(cmd).unwrap_or(&false)
     }
 }

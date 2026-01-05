@@ -25,12 +25,12 @@ pub mod args;
 pub use args::Args;
 pub(crate) mod common {
     mod editor;
-    mod executable_enum;
+    mod executable;
     mod loop_number;
     mod project_type;
     mod vcs;
     pub(crate) use editor::Editor;
-    pub(crate) use executable_enum::{EXECUTABLE_ENUM_CACHE, ExecutableEnum, ExecutableEnumTrait};
+    pub(crate) use executable::{Executable, ExecutableEnumTrait};
     pub(crate) use loop_number::LoopNumber;
     pub(crate) use project_type::ProjectType;
     pub(crate) use vcs::Vcs;

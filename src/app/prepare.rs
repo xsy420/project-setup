@@ -1,5 +1,5 @@
 use super::SpringBootInner;
-use crate::common::ExecutableEnum;
+use crate::common::Executable;
 use anyhow::{Error, Result};
 use num_traits::ToPrimitive;
 use ratatui::{
@@ -137,7 +137,7 @@ impl PrepareTexts {
     }
 
     fn descs() -> Vec<Vec<String>> {
-        vec![ExecutableEnum::descs(), SpringBootInner::descs()]
+        vec![Executable::descs(), SpringBootInner::descs()]
     }
 
     fn f64_headers_len() -> f64 {
@@ -183,7 +183,7 @@ impl PrepareApplication {
         tokio::spawn(async move {
             let mut permit = tx.reserve_many(buffer).await.unwrap();
             // Environment checking spawn
-            let preparing = ExecutableEnum::prepare(&mut permit, 0.).await;
+            let preparing = Executable::prepare(&mut permit, 0.).await;
             // Inner preparing spawn
             if preparing {
                 SpringBootInner::prepare(&mut permit, 1.).await;
