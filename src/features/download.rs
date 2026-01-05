@@ -26,8 +26,10 @@ pub(crate) fn download_file(
         .join("&");
     // 优先尝试 curl
     if Command::new("curl").arg("--version").output().is_ok() {
-        Command::new("curl")
+        use std::process::Stdio;
+        let output = Command::new("curl")
             .arg("--silent")
+            .arg("--show-error")
             .arg("-X")
             .arg(method.to_string())
             .arg("--data")
@@ -35,7 +37,20 @@ pub(crate) fn download_file(
             .arg("-o")
             .arg(output)
             .arg(url)
-            .status()?;
+            .stderr(Stdio::piped())
+            .output();
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    Ok(())
+                } else {
+                    Err(Error::msg(unsafe {
+                        String::from_utf8_unchecked(output.stderr)
+                    }))
+                }
+            }
+            Err(error) => Err(Error::new(error)),
+        }
     }
     // 其次尝试 wget
     else if Command::new("wget").arg("--version").output().is_ok() {
@@ -46,13 +61,23 @@ pub(crate) fn download_file(
             command.arg("--post-data").arg(&form_data);
         }
         // GET 请求不需要额外参数
-        command.arg(url).status()?;
+        match command.arg(url).output() {
+            Ok(output) => {
+                if output.status.success() {
+                    Ok(())
+                } else {
+                    Err(Error::msg(unsafe {
+                        String::from_utf8_unchecked(output.stderr)
+                    }))
+                }
+            }
+            Err(error) => Err(Error::new(error)),
+        }
     }
     // 没有可用的下载工具时报错
     else {
-        return Err(Error::msg("Neither curl nor wget found in system"));
+        Err(Error::msg("Neither curl nor wget found in system"))
     }
-    Ok(())
 }
 #[cfg(feature = "reqwest")]
 pub(crate) fn download_file(

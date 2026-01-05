@@ -1,6 +1,7 @@
 use super::{
     Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
-    InnerTipLabel, PrepareRecv, PrepareTrait, RadioOption, RadioOptionTrait, handle_inner_keyevent,
+    InnerTipLabel, PreparePermit, PrepareRecv, PrepareTrait, RadioOption, RadioOptionTrait,
+    handle_inner_keyevent,
 };
 use crate::{
     EnumFunc, InnerState, LoopableNumberedEnum, RadioOption,
@@ -23,7 +24,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{env, fmt::Debug, fs, path::PathBuf, sync::OnceLock};
 use strum_macros::{Display, EnumIter};
-use tokio::sync::mpsc;
 #[derive(Debug, Serialize, Deserialize)]
 struct SpringInitializrMetadata {
     #[serde(rename = "type")]
@@ -255,26 +255,53 @@ impl InnerTipLabel for SpringBootInner {
     }
 }
 impl PrepareTrait for SpringBootInner {
-    async fn prepare(permit: &mut mpsc::PermitIterator<'_, PrepareRecv>, offset: f64) {
-        if !ProjectType::SpringBoot.in_args() {
-            return;
-        }
+    async fn prepare(permit: &mut PreparePermit<'_>, offset: f64) -> bool {
         let mut recv = PrepareRecv::new(offset);
+        if !ProjectType::SpringBoot.in_args() {
+            recv.send_done(permit);
+            return true;
+        }
         let metadata_file = env::temp_dir().join("springboot_metadata.json");
-        recv.send(permit);
-        if !metadata_file.exists() {
-            let _ = download_file(
+        recv.send_ok(permit);
+        if metadata_file.exists() {
+            recv.send_ok(permit);
+        } else {
+            let r = download_file(
                 "https://start.spring.io/metadata/client",
                 &RequestMethod::GET,
                 &[],
                 &metadata_file,
             );
+            match r {
+                Ok(()) => {
+                    recv.send_ok(permit);
+                }
+                Err(error) => {
+                    recv.send_error(permit, error);
+                    return false;
+                }
+            }
         }
-        recv.next_step().send(permit);
-        let data = fs::read_to_string(metadata_file).unwrap();
-        recv.next_step().send(permit);
-        let _ = METADATA.set(serde_json::from_str(&data).unwrap());
-        recv.next_step().send(permit);
+        match fs::read_to_string(metadata_file).map_err(anyhow::Error::new) {
+            Ok(data) => {
+                recv.send_ok(permit);
+                match serde_json::from_str(&data).map_err(anyhow::Error::new) {
+                    Ok(metadata) => {
+                        let _ = METADATA.set(metadata);
+                        recv.send_ok(permit);
+                        true
+                    }
+                    Err(error) => {
+                        recv.send_error(permit, error);
+                        false
+                    }
+                }
+            }
+            Err(error) => {
+                recv.send_error(permit, error);
+                false
+            }
+        }
     }
 
     fn descs() -> Vec<String> {

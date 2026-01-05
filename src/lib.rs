@@ -14,7 +14,8 @@ pub mod app {
         Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
         InnerState, InnerTipLabel, handle_inner_keyevent,
     };
-    pub use prepare::{PrepareApplication, PrepareRecv, PrepareTrait};
+    pub use prepare::PrepareApplication;
+    pub(crate) use prepare::{PreparePermit, PrepareRecv, PrepareTrait};
     pub(crate) use radio_option::RadioOptionValue;
     use radio_option::{RadioOption, RadioOptionTrait};
     use springboot::SpringBootInner;
