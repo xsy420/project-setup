@@ -28,7 +28,6 @@ pub(crate) fn download_file(
         .join("&");
     // 优先尝试 curl
     if Executable::executable("curl") {
-        use std::process::Stdio;
         let output = Command::new("curl")
             .arg("--silent")
             .arg("--show-error")
@@ -39,7 +38,6 @@ pub(crate) fn download_file(
             .arg("-o")
             .arg(output)
             .arg(url)
-            .stderr(Stdio::piped())
             .output();
         match output {
             Ok(output) => {
