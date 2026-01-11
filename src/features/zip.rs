@@ -1,3 +1,5 @@
+#[cfg(not(feature = "zip"))]
+use crate::common::Executable;
 use anyhow::Error;
 #[cfg(feature = "zip")]
 use std::fs::File;
@@ -36,7 +38,7 @@ pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Erro
     let zip_path = path_converter(zip_path);
     let output_dir = path_converter(output_dir);
     // 优先尝试 unzip (Linux/macOS/Windows if installed)
-    if Command::new("unzip").arg("--help").output().is_ok() {
+    if Executable::executable("unzip") {
         Command::new("unzip")
             .arg("-q")
             .arg("-o")
@@ -47,7 +49,7 @@ pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Erro
         return Ok(());
     }
     // 其次尝试 7z (跨平台)
-    if Command::new("7z").arg("--help").output().is_ok() {
+    if Executable::executable("7z") {
         Command::new("7z")
             .arg("x")
             .arg("-y")
@@ -60,7 +62,7 @@ pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Erro
     #[cfg(target_os = "windows")]
     {
         // 方法1: 使用 tar (Windows 10+ 内置)
-        if let Ok(_) = Command::new("tar").arg("--version").output() {
+        if Executable::executable("tar") {
             Command::new("tar")
                 .arg("-xf")
                 .arg(&zip_path)

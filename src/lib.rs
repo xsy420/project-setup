@@ -3,6 +3,7 @@ pub mod app {
     mod cargo;
     mod cmake;
     mod inner;
+    mod prepare;
     mod radio_option;
     mod springboot;
     mod wip;
@@ -11,8 +12,10 @@ pub mod app {
     use cmake::CmakeInner;
     use inner::{
         Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
-        InnerState, InnerTipLabel, PrepareInner, handle_inner_keyevent,
+        InnerState, InnerTipLabel, handle_inner_keyevent,
     };
+    pub use prepare::PrepareApplication;
+    pub(crate) use prepare::{PreparePermit, PrepareRecv, PrepareTrait};
     pub(crate) use radio_option::RadioOptionValue;
     use radio_option::{RadioOption, RadioOptionTrait};
     use springboot::SpringBootInner;
@@ -22,10 +25,12 @@ pub mod args;
 pub use args::Args;
 pub(crate) mod common {
     mod editor;
+    mod executable;
     mod loop_number;
     mod project_type;
     mod vcs;
     pub(crate) use editor::Editor;
+    pub(crate) use executable::{Executable, ExecutableEnumTrait};
     pub(crate) use loop_number::LoopNumber;
     pub(crate) use project_type::ProjectType;
     pub(crate) use vcs::Vcs;

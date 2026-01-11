@@ -1,10 +1,11 @@
 use super::{
     Inner, InnerCommonState, InnerField, InnerFieldMapping, InnerHandleKeyEventOutput,
-    InnerTipLabel, PrepareInner, RadioOption, RadioOptionTrait, handle_inner_keyevent,
+    InnerTipLabel, PreparePermit, PrepareRecv, PrepareTrait, RadioOption, RadioOptionTrait,
+    handle_inner_keyevent,
 };
 use crate::{
     EnumFunc, InnerState, LoopableNumberedEnum, RadioOption,
-    common::{Editor, Vcs},
+    common::{Editor, ProjectType, Vcs},
     features::{RequestMethod, download_file, unzip},
 };
 use anyhow::Result;
@@ -23,7 +24,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{env, fmt::Debug, fs, path::PathBuf, sync::OnceLock};
 use strum_macros::{Display, EnumIter};
-use tokio::sync::mpsc;
 #[derive(Debug, Serialize, Deserialize)]
 struct SpringInitializrMetadata {
     #[serde(rename = "type")]
@@ -254,27 +254,65 @@ impl InnerTipLabel for SpringBootInner {
         ]
     }
 }
-impl PrepareInner for SpringBootInner {
-    async fn prepare(tx: mpsc::Sender<u16>) {
+impl PrepareTrait for SpringBootInner {
+    async fn prepare(permit: &mut PreparePermit<'_>, offset: f64) -> bool {
+        let mut recv = PrepareRecv::new(offset);
+        if !ProjectType::SpringBoot.in_args() {
+            recv.send_done(permit);
+            return true;
+        }
         let metadata_file = env::temp_dir().join("springboot_metadata.json");
-        tx.send(25).await.unwrap();
-        if !metadata_file.exists() {
-            let _ = download_file(
+        recv.send_ok(permit);
+        if metadata_file.exists() {
+            recv.send_ok(permit);
+        } else {
+            let r = download_file(
                 "https://start.spring.io/metadata/client",
                 &RequestMethod::GET,
                 &[],
                 &metadata_file,
             );
+            match r {
+                Ok(()) => {
+                    recv.send_ok(permit);
+                }
+                Err(error) => {
+                    recv.send_error(permit, error);
+                    return false;
+                }
+            }
         }
-        tx.send(50).await.unwrap();
-        let data = fs::read_to_string(metadata_file).unwrap();
-        tx.send(75).await.unwrap();
-        let _ = METADATA.set(serde_json::from_str(&data).unwrap());
-        tx.send(100).await.unwrap();
+        match fs::read_to_string(metadata_file).map_err(anyhow::Error::new) {
+            Ok(data) => {
+                recv.send_ok(permit);
+                match serde_json::from_str(&data).map_err(anyhow::Error::new) {
+                    Ok(metadata) => {
+                        let _ = METADATA.set(metadata);
+                        recv.send_ok(permit);
+                        true
+                    }
+                    Err(error) => {
+                        recv.send_error(permit, error);
+                        false
+                    }
+                }
+            }
+            Err(error) => {
+                recv.send_error(permit, error);
+                false
+            }
+        }
     }
 
-    fn is_prepared() -> bool {
-        METADATA.get().is_some()
+    fn descs() -> Vec<String> {
+        [
+            "Getting SpringBoot metadata file path",
+            "Downloading SpringBoot metadata file",
+            "Row reading SpringBoot metadata file",
+            "Parsing SpringBoot metadata in json",
+        ]
+        .map(ToString::to_string)
+        .to_vec()
     }
 }
 impl Inner for SpringBootInner {

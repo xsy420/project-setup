@@ -1,3 +1,5 @@
+#[cfg(not(feature = "reqwest"))]
+use crate::common::Executable;
 use anyhow::Error;
 #[cfg(feature = "reqwest")]
 use reqwest::blocking::Client;
@@ -25,9 +27,10 @@ pub(crate) fn download_file(
         .collect::<Vec<_>>()
         .join("&");
     // 优先尝试 curl
-    if Command::new("curl").arg("--version").output().is_ok() {
-        Command::new("curl")
+    if Executable::executable("curl") {
+        let output = Command::new("curl")
             .arg("--silent")
+            .arg("--show-error")
             .arg("-X")
             .arg(method.to_string())
             .arg("--data")
@@ -35,10 +38,22 @@ pub(crate) fn download_file(
             .arg("-o")
             .arg(output)
             .arg(url)
-            .status()?;
+            .output();
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    Ok(())
+                } else {
+                    Err(Error::msg(unsafe {
+                        String::from_utf8_unchecked(output.stderr)
+                    }))
+                }
+            }
+            Err(error) => Err(Error::new(error)),
+        }
     }
     // 其次尝试 wget
-    else if Command::new("wget").arg("--version").output().is_ok() {
+    else if Executable::executable("wget") {
         let mut command = Command::new("wget");
         command.arg("--quiet").arg("-O").arg(output);
         if *method == RequestMethod::POST {
@@ -46,13 +61,23 @@ pub(crate) fn download_file(
             command.arg("--post-data").arg(&form_data);
         }
         // GET 请求不需要额外参数
-        command.arg(url).status()?;
+        match command.arg(url).output() {
+            Ok(output) => {
+                if output.status.success() {
+                    Ok(())
+                } else {
+                    Err(Error::msg(unsafe {
+                        String::from_utf8_unchecked(output.stderr)
+                    }))
+                }
+            }
+            Err(error) => Err(Error::new(error)),
+        }
     }
     // 没有可用的下载工具时报错
     else {
-        return Err(Error::msg("Neither curl nor wget found in system"));
+        Err(Error::msg("Neither curl nor wget found in system"))
     }
-    Ok(())
 }
 #[cfg(feature = "reqwest")]
 pub(crate) fn download_file(

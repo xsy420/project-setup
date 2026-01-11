@@ -1,9 +1,10 @@
 use crate::app::RadioOptionValue;
+use crate::common::ExecutableEnumTrait;
 use anyhow::Error;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use project_setup_derive::LoopableNumberedEnum;
-use std::{ffi::OsStr, path::PathBuf, process::Command};
+use project_setup_derive::{ExecutableEnum, LoopableNumberedEnum};
+use std::{path::PathBuf, process::Command};
 use strum_macros::{Display, EnumIter};
 #[derive(
     Copy,
@@ -16,12 +17,16 @@ use strum_macros::{Display, EnumIter};
     FromPrimitive,
     ToPrimitive,
     LoopableNumberedEnum,
+    ExecutableEnum,
 )]
 #[numbered_enum(loop_within = 3)]
 pub(crate) enum Vcs {
     #[default]
+    #[exe("")]
     NotNeed,
+    #[exe("git")]
     Git,
+    #[exe("svn")]
     Svn,
 }
 impl Vcs {
@@ -45,24 +50,8 @@ impl Vcs {
         Ok(())
     }
 }
-impl AsRef<OsStr> for Vcs {
-    fn as_ref(&self) -> &OsStr {
-        OsStr::new(match self {
-            Self::Git => "git",
-            Self::Svn => "svn",
-            Self::NotNeed => "",
-        })
-    }
-}
 impl RadioOptionValue for Vcs {
     fn selectable(&self) -> bool {
-        match self {
-            Self::NotNeed => true,
-            Self::Git | Self::Svn => Command::new(self)
-                .arg("--version")
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false),
-        }
+        super::Executable::executable(&self.exe())
     }
 }
