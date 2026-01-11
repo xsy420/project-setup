@@ -14,7 +14,7 @@ use ratatui_macros::constraints;
 use tokio::sync::mpsc;
 #[derive(Clone, Copy)]
 pub(crate) struct PrepareRecv {
-    step: usize,
+    step:   usize,
     offset: f64,
 }
 impl PrepareRecv {
@@ -68,7 +68,7 @@ pub(crate) type PreparePermit<'a> = mpsc::PermitIterator<'a, Result<PrepareRecv>
 #[derive(Default)]
 struct PrepareProgress {
     progress: f64,
-    err_msg: String,
+    err_msg:  String,
 }
 impl PrepareProgress {
     fn recv(&mut self, recv: Result<PrepareRecv>) -> &mut Self {
@@ -167,7 +167,7 @@ impl PrepareStatus {
 #[derive(Default)]
 pub struct PrepareApplication {
     progress: PrepareProgress,
-    status: PrepareStatus,
+    status:   PrepareStatus,
 }
 impl PrepareApplication {
     /// # Errors

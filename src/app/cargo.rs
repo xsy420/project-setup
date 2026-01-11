@@ -60,23 +60,23 @@ enum Edition {
 }
 #[derive(InnerState, Clone)]
 pub(super) struct CargoInner {
-    name: String,
+    name:         String,
     project_type: RadioOption<ProjectType>,
-    edition: RadioOption<Edition>,
-    editor: RadioOption<Editor>,
-    vcs: RadioOption<Vcs>,
-    path: PathBuf,
+    edition:      RadioOption<Edition>,
+    editor:       RadioOption<Editor>,
+    vcs:          RadioOption<Vcs>,
+    path:         PathBuf,
     common_state: InnerCommonState,
 }
 impl CargoInner {
     pub(super) fn new() -> Self {
         Self {
-            name: String::new(),
+            name:         String::new(),
             project_type: RadioOption::default(),
-            edition: RadioOption::default(),
-            editor: RadioOption::default(),
-            vcs: RadioOption::default(),
-            path: env::current_dir().unwrap(),
+            edition:      RadioOption::default(),
+            editor:       RadioOption::default(),
+            vcs:          RadioOption::default(),
+            path:         env::current_dir().unwrap(),
             common_state: InnerCommonState::new::<CargoField>(),
         }
     }

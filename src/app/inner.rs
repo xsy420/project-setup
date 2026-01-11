@@ -12,7 +12,7 @@ use strum::IntoEnumIterator;
 #[derive(Default)]
 pub(crate) struct InnerHandleKeyEventOutput {
     pub(crate) esc_handled: bool,
-    pub(crate) exit: bool,
+    pub(crate) exit:        bool,
 }
 impl InnerHandleKeyEventOutput {
     pub(super) fn with_exited(mut self) -> Self {
@@ -48,7 +48,7 @@ pub(super) trait Inner: Sync {
 }
 #[derive(Clone)]
 pub(super) struct InnerCommonState {
-    pub(super) focus_index: LoopNumber,
+    pub(super) focus_index:    LoopNumber,
     pub(super) error_messages: Vec<String>,
 }
 impl InnerCommonState {
@@ -57,7 +57,7 @@ impl InnerCommonState {
         F: InnerField,
     {
         Self {
-            focus_index: LoopNumber::new(F::iter().count()),
+            focus_index:    LoopNumber::new(F::iter().count()),
             error_messages: F::iter().map(|_| String::new()).collect(),
         }
     }
