@@ -4,31 +4,13 @@ use project_setup::{
     app::{Application, PrepareApplication},
     args::Args,
 };
-use ratatui::{
-    Terminal,
-    crossterm::{
-        execute,
-        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
-    },
-    prelude::*,
-};
-use std::io::{self};
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    // 设置终端
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-    PrepareApplication::default().run(&mut terminal)?;
-    // 创建应用
-    let app = Application::new(args);
-    let res = app.run(&mut terminal);
-    // 清理终端
-    disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    let res = ratatui::run(|terminal| {
+        PrepareApplication::default().run(terminal)?;
+        Application::new(args).run(terminal)
+    });
     if let Err(err) = res {
         println!("{err:?}");
     }
