@@ -236,7 +236,8 @@ impl PrepareApplication {
                     std::process::exit(0);
                 }
                 'r' => {
-                    // retry download
+                    // retry current failed prepare step. If the retry succeed, continue prepare
+                    // progress.
                     todo!()
                 }
                 _ => {}
