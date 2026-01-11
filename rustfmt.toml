@@ -6,3 +6,4 @@ spaces_around_ranges = true
 unstable_features = true
 use_field_init_shorthand = true
 wrap_comments = true
+struct_field_align_threshold = 99

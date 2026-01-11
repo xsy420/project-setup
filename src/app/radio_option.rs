@@ -12,7 +12,7 @@ where
     V: RadioOptionValue,
 {
     pub(super) value: V,
-    id: LoopNumber,
+    id:               LoopNumber,
 }
 impl<V: RadioOptionValue> Default for RadioOption<V> {
     fn default() -> Self {

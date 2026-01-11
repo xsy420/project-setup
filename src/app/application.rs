@@ -12,10 +12,10 @@ use ratatui::{
 use ratatui_macros::constraints;
 use strum::IntoEnumIterator;
 pub struct Application {
-    selected: ProjectType,
+    selected:        ProjectType,
     focus_left_side: bool,
-    inners: Vec<Box<dyn Inner>>,
-    default_inner: Option<ProjectType>,
+    inners:          Vec<Box<dyn Inner>>,
+    default_inner:   Option<ProjectType>,
 }
 impl Application {
     #[must_use]

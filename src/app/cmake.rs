@@ -81,28 +81,28 @@ impl Language {
 }
 #[derive(Clone, InnerState)]
 pub(super) struct CmakeInner {
-    name: String,
-    cmake_minimum_required: String,
-    project_type: RadioOption<ProjectType>,
-    language: RadioOption<Language>,
+    name:                      String,
+    cmake_minimum_required:    String,
+    project_type:              RadioOption<ProjectType>,
+    language:                  RadioOption<Language>,
     language_standard_version: String,
-    editor: RadioOption<Editor>,
-    vcs: RadioOption<Vcs>,
-    path: PathBuf,
-    common_state: InnerCommonState,
+    editor:                    RadioOption<Editor>,
+    vcs:                       RadioOption<Vcs>,
+    path:                      PathBuf,
+    common_state:              InnerCommonState,
 }
 impl CmakeInner {
     pub(super) fn new() -> Self {
         Self {
-            name: String::new(),
-            cmake_minimum_required: String::new(),
-            project_type: RadioOption::default(),
-            language: RadioOption::default(),
+            name:                      String::new(),
+            cmake_minimum_required:    String::new(),
+            project_type:              RadioOption::default(),
+            language:                  RadioOption::default(),
             language_standard_version: String::new(),
-            editor: RadioOption::default(),
-            vcs: RadioOption::default(),
-            path: env::current_dir().unwrap(),
-            common_state: InnerCommonState::new::<CmakeField>(),
+            editor:                    RadioOption::default(),
+            vcs:                       RadioOption::default(),
+            path:                      env::current_dir().unwrap(),
+            common_state:              InnerCommonState::new::<CmakeField>(),
         }
     }
 }

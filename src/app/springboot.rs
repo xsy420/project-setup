@@ -28,22 +28,22 @@ use strum_macros::{Display, EnumIter};
 struct SpringInitializrMetadata {
     #[serde(rename = "type")]
     metadata_type: Value,
-    dependencies: Dependencies,
+    dependencies:  Dependencies,
     #[serde(rename = "bootVersion")]
     boot_versions: SelectableOption,
-    packaging: SelectableOption,
+    packaging:     SelectableOption,
     #[serde(rename = "javaVersion")]
     java_versions: SelectableOption,
-    language: SelectableOption,
+    language:      SelectableOption,
     #[serde(rename = "groupId")]
-    group_id: TextOption,
+    group_id:      TextOption,
     #[serde(rename = "artifactId")]
-    artifact_id: TextOption,
-    version: TextOption,
-    name: TextOption,
-    description: TextOption,
+    artifact_id:   TextOption,
+    version:       TextOption,
+    name:          TextOption,
+    description:   TextOption,
     #[serde(rename = "packageName")]
-    package_name: TextOption,
+    package_name:  TextOption,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct Dependencies {
@@ -52,31 +52,31 @@ struct Dependencies {
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct DependencyGroup {
-    name: String,
+    name:   String,
     values: Vec<Dependency>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct Dependency {
-    id: String,
-    name: String,
-    description: String,
+    id:            String,
+    name:          String,
+    description:   String,
     #[serde(rename = "versionRange")]
     version_range: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct SelectableOption {
-    r#type: String,
+    r#type:  String,
     default: String,
-    values: Vec<IdName>,
+    values:  Vec<IdName>,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct IdName {
-    id: String,
+    id:   String,
     name: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct TextOption {
-    r#type: String,
+    r#type:  String,
     default: String,
 }
 static METADATA: OnceLock<SpringInitializrMetadata> = OnceLock::new();
@@ -152,33 +152,33 @@ enum JavaVersion {
 }
 #[derive(Clone, InnerState)]
 pub(crate) struct SpringBootInner {
-    name: String,
-    generator: RadioOption<Generator>,
-    group_id: String,
-    artifact_id: String,
+    name:         String,
+    generator:    RadioOption<Generator>,
+    group_id:     String,
+    artifact_id:  String,
     boot_version: String,
-    language: RadioOption<Language>,
+    language:     RadioOption<Language>,
     java_version: RadioOption<JavaVersion>,
-    editor: RadioOption<Editor>,
-    vcs: RadioOption<Vcs>,
+    editor:       RadioOption<Editor>,
+    vcs:          RadioOption<Vcs>,
     dependencies: Vec<String>,
-    path: PathBuf,
+    path:         PathBuf,
     common_state: InnerCommonState,
 }
 impl SpringBootInner {
     pub(crate) fn new() -> Self {
         Self {
-            name: "demo".to_string(),
-            generator: RadioOption::default(),
-            group_id: "com.example".to_string(),
-            artifact_id: "demo".to_string(),
+            name:         "demo".to_string(),
+            generator:    RadioOption::default(),
+            group_id:     "com.example".to_string(),
+            artifact_id:  "demo".to_string(),
             boot_version: "3.3.0".to_string(),
-            language: RadioOption::default(),
+            language:     RadioOption::default(),
             java_version: RadioOption::default(),
-            editor: RadioOption::default(),
-            vcs: RadioOption::default(),
+            editor:       RadioOption::default(),
+            vcs:          RadioOption::default(),
             dependencies: vec![String::new()],
-            path: env::current_dir().unwrap(),
+            path:         env::current_dir().unwrap(),
             common_state: InnerCommonState::new::<SpringBootField>(),
         }
     }
