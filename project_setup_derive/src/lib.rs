@@ -69,6 +69,7 @@ pub fn inner_state_derive(input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+/// # Panics
 #[proc_macro_derive(EnumFunc, attributes(enum_func))]
 pub fn enum_func_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -94,12 +95,9 @@ pub fn enum_func_derive(input: TokenStream) -> TokenStream {
                                 && let Ok(s) = ml.parse_args::<LitStr>()
                             {
                                 let func_value = s.value();
-                                func_branches
-                                    .entry(func_name)
-                                    .or_insert(Vec::new())
-                                    .push(quote! {
-                                        #enum_name::#variant_name => #func_value.to_string()
-                                    });
+                                func_branches.entry(func_name).or_default().push(quote! {
+                                    #enum_name::#variant_name => #func_value.to_string()
+                                });
                             }
                         }
                     }
@@ -124,13 +122,13 @@ pub fn enum_func_derive(input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+/// # Panics
 #[proc_macro_derive(ExecutableEnum, attributes(exe))]
 pub fn executable_enum_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
-    let data = match &input.data {
-        syn::Data::Enum(data) => data,
-        _ => panic!("ExecutableEnum can only be derived for enums"),
+    let syn::Data::Enum(data) = &input.data else {
+        panic!("ExecutableEnum can only be derived for enums")
     };
     let match_arms: Vec<_> = data
         .variants
@@ -148,9 +146,8 @@ pub fn executable_enum_derive(input: TokenStream) -> TokenStream {
                     break;
                 }
             }
-            let exe_str = match exe_value {
-                Some(s) => s,
-                None => panic!("Variant {} is missing #[exe] attribute", variant_name),
+            let Some(exe_str) = exe_value else {
+                panic!("Variant {variant_name} is missing #[exe] attribute")
             };
             quote! {
                 #name::#variant_name => #exe_str,
