@@ -19,14 +19,15 @@ fn path_converter(path: &PathBuf) -> PathBuf {
 #[cfg(not(feature = "zip"))]
 #[cfg(target_os = "windows")]
 fn path_converter(path: &PathBuf) -> PathBuf {
-    let is_git_bash = std::env::var("MSYSTEM").map_or(false, |v| v.starts_with("MINGW"));
+    let is_git_bash = std::env::var("MSYSTEM").is_ok_and(|v| v.starts_with("MINGW"));
     if is_git_bash {
         let mut result = path.to_str().unwrap().replace('\\', "/");
-        if let Some(pos) = result.find(':') {
-            if pos == 1 && result.chars().next().unwrap().is_alphabetic() {
-                let drive = &result[.. 1].to_lowercase();
-                result.replace_range(..= 1, &format!("/{}", drive));
-            }
+        if let Some(pos) = result.find(':')
+            && pos == 1
+            && result.chars().next().unwrap().is_alphabetic()
+        {
+            let drive = &result[.. 1].to_lowercase();
+            result.replace_range(..= 1, &format!("/{drive}"));
         }
         Path::new(&result).to_path_buf()
     } else {
@@ -78,8 +79,9 @@ pub(crate) fn unzip(zip_path: &PathBuf, output_dir: &PathBuf) -> Result<(), Erro
             output_dir.display()
         );
         let status = Command::new("powershell")
-            .args(&["-Command", &ps_script])
-            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .arg("-Command")
+            .arg(&ps_script)
+            .creation_flags(0x0800_0000) // CREATE_NO_WINDOW
             .status()?;
         if status.success() {
             return Ok(());
