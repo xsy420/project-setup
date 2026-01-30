@@ -26,11 +26,10 @@ pub(crate) enum ProjectType {
 }
 impl ProjectType {
     pub(crate) fn in_args(self) -> bool {
-        if let Some(p) = crate::Args::parse().project_type
-            && p != self
-        {
-            return false;
+        if let Some(p) = crate::Args::parse().project_type {
+            p == self
+        } else {
+            true
         }
-        true
     }
 }
