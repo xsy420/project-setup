@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use strum_macros::Display;
 #[derive(Display, PartialEq)]
-#[allow(clippy::upper_case_acronyms, dead_code)]
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) enum RequestMethod {
     GET,
     POST,

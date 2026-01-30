@@ -119,11 +119,7 @@ impl PrepareProgress {
             .trunc()
             .to_usize()
             .unwrap();
-        if header_index == PrepareTexts::headers().len() {
-            "Done"
-        } else {
-            PrepareTexts::headers()[header_index]
-        }
+        PrepareTexts::headers()[header_index]
     }
 
     fn percent(&mut self) -> String {
