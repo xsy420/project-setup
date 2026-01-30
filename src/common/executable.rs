@@ -18,8 +18,7 @@ impl PrepareTrait for Executable {
                 || Command::new(ele.clone())
                     .arg(if ele.eq("7z") { "--help" } else { "--version" })
                     .output()
-                    .map(|o| o.status.success())
-                    .unwrap_or(false);
+                    .is_ok_and(|o| o.status.success());
             cache.insert(ele, res);
             recv.send_ok(permit);
         }
