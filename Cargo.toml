@@ -71,7 +71,7 @@ name = "project-setup-mangen"
 path = "src/bin/mangen.rs"
 
 [dependencies]
-anyhow = "1.0.100"
+anyhow = "1.0.101"
 clap = { version = "4.5.57", features = ["derive"] }
 clap_complete = "4.5.65"
 clap_mangen = "0.2.31"
