@@ -94,7 +94,7 @@ serde_json = "1.0"
 strum = "0.27.2"
 strum_macros = "0.27.2"
 tokio = { version = "1.49.0", features = ["full"] }
-tui-big-text = "0.8.1"
+tui-big-text = "0.8.2"
 zip = { version = "7.4.0", default-features = false, features = ["deflate"], optional = true }
 
 [features]
