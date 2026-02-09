@@ -83,7 +83,7 @@ ratatui = { version = "0.30.0", default-features = false, features = [
   "crossterm",
 ] }
 ratatui-macros = "0.7.0"
-reqwest = { version = "0.13.1", default-features = false, features = [
+reqwest = { version = "0.13.2", default-features = false, features = [
   "default-tls",
   "blocking",
   "form",
