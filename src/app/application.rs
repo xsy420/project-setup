@@ -121,15 +121,11 @@ impl Application {
                 if self.focus_left_side {
                     match key.code {
                         KeyCode::Char('q') => return Ok(()),
-                        KeyCode::Char('j') => {
-                            if self.default_inner.is_none() {
-                                self.selected = self.selected.next();
-                            }
+                        KeyCode::Char('j') if self.default_inner.is_none() => {
+                            self.selected = self.selected.next();
                         }
-                        KeyCode::Char('k') => {
-                            if self.default_inner.is_none() {
-                                self.selected = self.selected.prev();
-                            }
+                        KeyCode::Char('k') if self.default_inner.is_none() => {
+                            self.selected = self.selected.prev();
                         }
                         KeyCode::Enter => self.focus_left_side = false,
                         _ => {}
