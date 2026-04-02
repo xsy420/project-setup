@@ -95,7 +95,7 @@ strum = "0.28.0"
 strum_macros = "0.28.0"
 tokio = { version = "1.50.0", features = ["full"] }
 tui-big-text = "0.8.3"
-zip = { version = "8.4.0", default-features = false, features = ["deflate"], optional = true }
+zip = { version = "8.5.0", default-features = false, features = ["deflate"], optional = true }
 
 [features]
 # default = ["reqwest", "zip"]
